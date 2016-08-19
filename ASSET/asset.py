@@ -52,6 +52,8 @@ import elephant.conversion as conv
 import elephant.spike_train_surrogates as spike_train_surrogates
 from sklearn.cluster import dbscan as dbscan
 
+from timer import MultiTimer
+
 # =============================================================================
 # Some Utility Functions to be dealt with in some way or another
 # =============================================================================
@@ -1138,12 +1140,14 @@ def _jsf_uniform_orderstat_3d(u, alpha, n):
     # by matrix algebra, working along the third dimension (axis 0)
     Ptot = np.zeros((A, B))  # initialize all A x B probabilities to 0
     iter_id = 0
+    MultiTimer( "  joint_probability_matrix  _jsf_uniform_orderstat_3d init")
     for i in itertools.product(*lists):
         iter_id += 1
         di = -np.diff(np.hstack([n, list(i), 0]))
+        MultiTimer( "    joint_probability_matrix  _jsf_uniform_orderstat_3d diff")
         if np.all(di >= 0):
             dI = di.reshape((-1, 1, 1)) * np.ones((A, B))  # shape (d+1, A, B)
-
+            MultiTimer( "    joint_probability_matrix  _jsf_uniform_orderstat_3d reshape")
             # for each a=0,1,...,A-1 and b=0,1,...,B-1, replace dU_abk with 1
             # whenever dI_abk = 0, so that dU_abk ** dI_abk = 1 (this avoids
             # nans when both dU_abk and dI_abk are 0, and is mathematically
@@ -1156,11 +1160,21 @@ def _jsf_uniform_orderstat_3d(u, alpha, n):
             # Creates a matrix log_dIfactorial of shape (A, B)
             log_di_factorial = np.sum([np.log(np.arange(1, di_k + 1)).sum()
                                        for di_k in di if di_k >= 1])
-
+            MultiTimer( "    joint_probability_matrix  _jsf_uniform_orderstat_3d sum")
             # Compute for each i,j the contribution to the total
             # probability given by this step, and add it to the total prob.
-            logP = (dI * np.log(dU2)).sum(axis=0) - log_di_factorial
+            log_DU2 = np.log(dU2)
+            MultiTimer( "    joint_probability_matrix  _jsf_uniform_orderstat_3d log_DU2")
+            prod_DU2 = dI * log_DU2
+            MultiTimer( "    joint_probability_matrix  _jsf_uniform_orderstat_3d prod_DU2")
+            sum_DU2 = prod_DU2.sum(axis=0)
+            MultiTimer( "    joint_probability_matrix  _jsf_uniform_orderstat_3d sum_DU2")
+            logP = sum_DU2 - log_di_factorial
+            MultiTimer( "    joint_probability_matrix  _jsf_uniform_orderstat_3d log")
             Ptot += np.exp(logP + logK)
+            MultiTimer( "    joint_probability_matrix  _jsf_uniform_orderstat_3d exp")
+
+        MultiTimer( "    joint_probability_matrix  _jsf_uniform_orderstat_3d step")
     return Ptot
 
 
@@ -1229,7 +1243,7 @@ def _pmat_neighbors(mat, filter_shape, nr_largest=None, diag=0):
     # TODO: make this on a 3D matrix to parallelize...
     N_bin = mat.shape[0]
     bin_range = range(N_bin - l + 1)
-
+    MultiTimer( "    joint_probability_matrix  _pmat_neighbors init ")
     # Compute fmat
     try:  # try by stacking the different patches of each row of mat
         flattened_filt = filt.flatten()
@@ -1239,12 +1253,19 @@ def _pmat_neighbors(mat, filter_shape, nr_largest=None, diag=0):
             row_patches = np.zeros((len(bin_range), l ** 2))
             for x in bin_range:
                 row_patches[x, :] = (mat[y:y + l, x:x + l]).flatten()
+
+            MultiTimer( "    joint_probability_matrix  _pmat_neighbors flatten ")
             # take the l largest values in each row (patch) and assign them
             # to the corresponding row in lmat
             largest_vals = np.sort(
                 row_patches * flattened_filt, axis=1)[:, -d:]
+            MultiTimer( "    joint_probability_matrix  _pmat_neighbors sort ")
+
+
             lmat[:, y + (l // 2),
                  (l // 2): (l // 2) + N_bin - l + 1] = largest_vals.T
+
+            MultiTimer( "    joint_probability_matrix  _pmat_neighbors step ")
 
     except MemoryError:  # if too large, do it serially by for loops
         for y in bin_range:  # one step to the right;
@@ -1317,13 +1338,15 @@ def joint_probability_matrix(
     # them by the maximum value 1-pvmin
     pmat_neighb = _pmat_neighbors(
         pmat, filter_shape=filter_shape, nr_largest=nr_largest, diag=0)
+    MultiTimer( "  joint_probability_matrix  _pmat_neighbors")
+
     pmat_neighb = np.minimum(pmat_neighb, 1. - pvmin)
 
     # Compute the joint p-value matrix jpvmat
     l, w = filter_shape
     n = l * (1 + 2 * w) - w * (w + 1)  # number of entries covered by kernel
     jpvmat = _jsf_uniform_orderstat_3d(pmat_neighb, alpha, n)
-
+    MultiTimer( "  joint_probability_matrix  _jsf_uniform_orderstat_3d")
     return 1. - jpvmat
 
 
