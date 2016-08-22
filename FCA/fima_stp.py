@@ -8,6 +8,8 @@ import numpy as np
 import scipy.sparse as sps
 import time
 
+from timer import MultiTimer
+
 
 def st2trans(sts, wndlen, width):
     """
@@ -31,10 +33,13 @@ def st2trans(sts, wndlen, width):
     # Bin the spike trains
     sts_bool = conv.BinnedSpikeTrain(
         sts, binsize=width).to_bool_array()
+    MultiTimer("  st2trans bin spikes")
+
     # List of all the possible attributes (spikes)
     attributes = np.array(
         [s*wndlen + t for s in range(len(sts)) for t in range(wndlen)])
     trans = []
+
     # Assigning to each of the oject (window) his attributes (spikes)
     for w in range(sts_bool.shape[1] - wndlen + 1):
         currentWindow = sts_bool[:, w:w+wndlen]
@@ -42,6 +47,7 @@ def st2trans(sts, wndlen, width):
         if np.add.reduce(currentWindow[:, 0]) == 0:
             continue
         trans.append(attributes[currentWindow.flatten()])
+        MultiTimer("  st2trans assign attributes")
     return trans
 
 
@@ -231,7 +237,7 @@ def pvspec(sts, wndlen, width, dither, n, min_z=2, min_c=2, verbose=False):
     0 are not listed.
 
     '''
-
+    MultiTimer("pvspec start")
     comm = MPI.COMM_WORLD   # create MPI communicator
     rank = comm.Get_rank()  # get rank of current MPI task
     size = comm.Get_size()  # get tot number of MPI tasks
@@ -252,13 +258,22 @@ def pvspec(sts, wndlen, width, dither, n, min_z=2, min_c=2, verbose=False):
 
     if rank == 0:
         for i in xrange(len_partition + len_remainder):
-            Surrs = [surr.dither_spikes(
-                xx, dither=dither, n=1)[0] for xx in sts]
+            #Surrs = [surr.dither_spikes(
+            #    xx, dither=dither, n=1)[0] for xx in sts]
+
+            Surrs = []
+            for xx in sts:
+                Surrs.append(surr.dither_spikes(xx, dither=dither, n=1)[0])
+                MultiTimer("  pvspec list step surrs step")
+            MultiTimer("pvspec list step surrs")
 
             # Find all pattern signatures in the current surrogate data set
             SurrTrans = st2trans(Surrs, wndlen, width=width)
+            MultiTimer("pvspec list step st2trans")
             SurrSgnt = [(a, b) for (a, b, c) in fpgrowth(
                 SurrTrans, target='c', min_z=min_z, min_c=min_c, report='#')]
+            MultiTimer("pvspec list step fpgrowth")
+            
             # List all signatures (z,c) <= (z*, c*), for each (z*,c*) in the
             # current surrogate, and add it to the list of all signatures
             FilledSgnt = []
@@ -266,7 +281,12 @@ def pvspec(sts, wndlen, width, dither, n, min_z=2, min_c=2, verbose=False):
                 for j in xrange(min_z, z + 1):
                     for k in xrange(min_c, c + 1):
                         FilledSgnt.append((j, k))
+
+            MultiTimer("pvspec list step list")
+
             SurrSgnts.extend(list(set(FilledSgnt)))
+
+            MultiTimer("pvspec list step end")
     else:
         for i in xrange(len_partition):
             Surrs = [surr.dither_spikes(
@@ -285,6 +305,7 @@ def pvspec(sts, wndlen, width, dither, n, min_z=2, min_c=2, verbose=False):
                         FilledSgnt.append((j, k))
             SurrSgnts.extend(list(set(FilledSgnt)))
 
+    MultiTimer("pvspec middle")
     if rank != 0:
         comm.send(SurrSgnts, dest=0)
 
@@ -303,6 +324,8 @@ def pvspec(sts, wndlen, width, dither, n, min_z=2, min_c=2, verbose=False):
     PvSpec = [(a, b, c * scale) for (a, b), c in PvSpec.items()]
     if verbose is True:
         print '    end of pvspec'
+
+    MultiTimer("pvspec end")
     return PvSpec
 
 

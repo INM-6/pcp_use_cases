@@ -1,4 +1,8 @@
 # -*- coding: utf-8 -*-
+from timer import MultiTimer
+
+MultiTimer("start") 
+
 
 import fima_stp
 import elephant.spike_train_generation as stg
@@ -6,6 +10,8 @@ import elephant.conversion as conv
 import numpy as np
 import quantities as pq
 import neo
+
+MultiTimer("imports") 
 
 
 def generate_stp(occ, xi, t_stop, delays, rate):
@@ -53,6 +59,8 @@ for i in range(N-xi):
     np.random.seed(i+xi)
     sts.append(stg.homogeneous_poisson_process(rate, t_stop=T))
 
+MultiTimer("data generation")
+
 # Analysis parameters
 wndlen = 50  # Length of the sliding window
 width = 1 * pq.ms  # Time resolution of the patterns
@@ -63,29 +71,42 @@ n_samples = 500  # Number of samples used to approximate stability
 
 # Boostrap technique to compute the Pattern Spectrum (matrix of p-values)
 # (Computational expensive)
+
 PvSpec = fima_stp.pvspec(
     sts, wndlen, width,  dither=dither, n=n_surr, min_z=3, min_c=3)
+
+MultiTimer("Bootstrap 1")
 nsSgnt = fima_stp.sspec(PvSpec, alpha, corr='fdr', report='e')
+
+MultiTimer("Bootstrap 2")
 
 # Conversion of data in transaction (input format for FP-growth algorithm)
 binned_sts = conv.BinnedSpikeTrain(sts, width).to_array()
 context, rel_matrix = fima_stp.buildContext(binned_sts, wndlen)
 Trans = fima_stp.st2trans(sts, wndlen, width=width)
 
+MultiTimer("Conversion to transaction")
+
 # Mining the data with FP-growth algorithm
 concepts_int = [
     i[0] for i in fima_stp.fpgrowth(
         Trans, target='c', min_z=3, min_c=3, report='a')]
 
+MultiTimer("FP-growth")
+
 # Computing the stability measure (Computational expensive)
 concepts = fima_stp._approximate_stability_extensional(
         concepts_int, rel_matrix, wndlen, n_samples)
+
+MultiTimer("stability measure FP-growth")
 
 # Selecting only significant concepts
 concepts_psf = [
     c for c in concepts if (
         len(c[0]), len(c[1])) not in nsSgnt]
 concepts_psr = fima_stp.psr(concepts_psf, nsSgnt, wndlen)
+
+MultiTimer("significant concepts")
 
 # Alternative single call for the entire method
 # concepts, sgnf_concepts, pvalues_spectra, nsgnf_spectra = fima_stp.psf(
@@ -97,3 +118,5 @@ for patt in concepts_psr:
     if list(sorted(patt[0])) == [i*wndlen + i*5 for i in range(xi)]:
             print "Succesfull Detection of the Spatial Temoral Pattern"
             break
+
+MultiTimer("end").print_timings()

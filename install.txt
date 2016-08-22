@@ -1,0 +1,19 @@
+# Install packages (Jureca):
+pip install --user neo   (install quantities as a side-effect)
+pip install --user sklearn
+pip install --user elephant
+
+#load environment
+module load intel-para/2016a
+module load CMake/3.4.3
+module load SciPy-Stack/2016a-Python-2.7.11
+module load mpi4py/2.0.0-Python-2.7.11
+
+# FCA
+python fima_example.py
+Succesfull Detection of the Spatial Temoral Pattern
+
+
+
+
+
