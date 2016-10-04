@@ -1,13 +1,22 @@
 # Install packages (Jureca):
-pip install --user neo   (install quantities as a side-effect)
+pip install --user neo   #(install quantities as a side-effect)
 pip install --user sklearn
 pip install --user elephant
 
-#load environment
+#load environment Jureca
 module load intel-para/2016a
 module load CMake/3.4.3
 module load SciPy-Stack/2016a-Python-2.7.11
 module load mpi4py/2.0.0-Python-2.7.11
+
+#load environment Julia
+module load  intel-python/2.7.11_2017.0.018
+module load intel-impi/5.1.3     # for mpi support
+
+
+import numpy as np
+np.__config__.show()
+
 
 # FCA
 python fima_example.py
@@ -15,5 +24,19 @@ Succesfull Detection of the Spatial Temoral Pattern
 
 
 
+'numpy==1.10'
+
+ pip install --user 'numpy==1.10'
+ pip install --user 'scipy==0.17'
+
+ https://software.intel.com/en-us/articles/numpyscipy-with-intel-mkl
+
+ export PATH=/opt/intel/compilers_and_libraries_2016/linux/bin/intel64/:$PATH
 
 
+ python setup.py config --compiler=intelem build_clib --compiler=intelem build_ext --compiler=intelem install --user
+
+ python setup.py config  uninstall
+
+
+ export PYTHONPATH=/gpfs/homeb/pcp0/pcp0016/.local/lib/python2.7/site-packages/:/gpfs/homeb/pcp0/pcp0016/.local/lib:$PYTHONPATH

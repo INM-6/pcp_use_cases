@@ -7,9 +7,16 @@ import neo
 import elephant.statistics as estats
 import asset as asset
 import elephant.spike_train_generation as stg
-
+from mpi4py import MPI
 
 MultiTimer("import")
+
+# First action: init mpi
+comm = MPI.COMM_WORLD
+
+size = comm.Get_size()
+rank = comm.Get_rank()
+
 # ===========================================================================
 # Parameters definition
 # ===========================================================================
@@ -106,4 +113,5 @@ file = open("sse_found", "w")
 file.write(str(sse_found))
 
 file.close()
-MultiTimer("end").print_timings()
+if rank == 0:
+    MultiTimer("end").print_timings()

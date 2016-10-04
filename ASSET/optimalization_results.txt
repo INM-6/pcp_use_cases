@@ -1,0 +1,10 @@
+runtime(sec) version github
+190, vanilla, https://github.com/INM-6/pcp_use_cases/commit/1aa4c61c08ed720f36312d1e355e6294d74bcd60
+196, naive treadpool, null
+71 , mpi first lists entry (20, login)
+67,  mpi last lists entry  (20,login)
+25,  mpi randomized (20, login)
+22.6 mpi (24, login)
+19.6 mpi (28, login)
+111 mpi (28, knl)
+174 mpi (256, knl)

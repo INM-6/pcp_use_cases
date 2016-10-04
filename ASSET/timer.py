@@ -61,3 +61,5 @@ class MultiTimer:
 
         print ("Total time : {0}".format(total))
 
+        self.total = total
+

@@ -1,0 +1,35 @@
+#numpy and scipy sources
+# based on:
+# https://software.intel.com/en-us/articles/numpyscipy-with-intel-mkl
+
+# download and unpack
+wget http://sourceforge.net/projects/numpy/files/NumPy/1.10.4'/numpy-1.10.4'.tar.gz
+wget https://github.com/scipy/scipy/releases/download/v0.17.1/scipy-0.17.1.tar.gz
+
+
+
+# add site.cfg with following content to sourcedir of both sources:
+[mkl]
+library_dirs=/opt/intel/compilers_and_libraries_2016/linux/mkl/lib/intel64
+include_dirs=/opt/intel/compilers_and_libraries_2016/linux/mkl/include
+mkl_libs=mkl_rt
+lapack_libs=
+
+# load intel invironment
+module load  python/knl_27
+
+
+# set the paths
+ export PYTHONPATH=/gpfs/homeb/pcp0/pcp0016/.local/lib/python2.7/site-packages/:/gpfs/homeb/pcp0/pcp0016/.local/lib:$PYTHONPATH
+export PATH=/opt/intel/compilers_and_libraries_2016/linux/bin/intel64/:$PATH
+
+#in the numpy and scipy dir:
+ python setup.py config --compiler=intelem build_clib --compiler=intelem build_ext --compiler=intelem install --user
+
+# then it should work
+
+
+
+
+
+

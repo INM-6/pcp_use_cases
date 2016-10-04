@@ -50,6 +50,8 @@ import neo
 import itertools
 import elephant.conversion as conv
 import elephant.spike_train_surrogates as spike_train_surrogates
+from mpi4py import MPI
+
 from sklearn.cluster import dbscan as dbscan
 
 from timer import MultiTimer
@@ -1121,7 +1123,7 @@ def _jsf_uniform_orderstat_3d(u, alpha, n):
 
     # Define ranges [1,...,n], [2,...,n], ..., [d,...,n] for the mute variables
     # used to compute the integral as a sum over several possibilities
-    lists = [_xrange(j, n + 1) for j in _xrange(d, 0, -1)]
+    lists = [range(j, n + 1) for j in _xrange(d, 0, -1)]
 
     # Compute the log of the integral's coefficient
     logK = np.sum(np.log(np.arange(1, n + 1))) - n * np.log(1 - alpha)
@@ -1139,9 +1141,23 @@ def _jsf_uniform_orderstat_3d(u, alpha, n):
     # Compute the probabilities at each (a, b), a=0,...,A-1, b=0,...,B-1
     # by matrix algebra, working along the third dimension (axis 0)
     Ptot = np.zeros((A, B))  # initialize all A x B probabilities to 0
-    iter_id = 0
+    
     MultiTimer( "  joint_probability_matrix  _jsf_uniform_orderstat_3d init")
+
+    # TODO: With a blunt knive make the code MPI
+    comm = MPI.COMM_WORLD
+    size = comm.Get_size()
+    rank = comm.Get_rank()
+
+    # The entries out of the first lists entry we will process on this run
+    #list_entries = _get_list_entries_for_this_rank(lists[2])
+
+    iter_id = 0
     for i in itertools.product(*lists):
+        if iter_id % size != rank:
+            iter_id += 1
+            continue 
+
         iter_id += 1
         di = -np.diff(np.hstack([n, list(i), 0]))
         MultiTimer( "    joint_probability_matrix  _jsf_uniform_orderstat_3d diff")
@@ -1159,7 +1175,7 @@ def _jsf_uniform_orderstat_3d(u, alpha, n):
             # Compute for each i=0,...,A-1 and j=0,...,B-1: log(I_ij !)
             # Creates a matrix log_dIfactorial of shape (A, B)
             log_di_factorial = np.sum([np.log(np.arange(1, di_k + 1)).sum()
-                                       for di_k in di if di_k >= 1])
+                                        for di_k in di if di_k >= 1])
             MultiTimer( "    joint_probability_matrix  _jsf_uniform_orderstat_3d sum")
             # Compute for each i,j the contribution to the total
             # probability given by this step, and add it to the total prob.
@@ -1175,7 +1191,59 @@ def _jsf_uniform_orderstat_3d(u, alpha, n):
             MultiTimer( "    joint_probability_matrix  _jsf_uniform_orderstat_3d exp")
 
         MultiTimer( "    joint_probability_matrix  _jsf_uniform_orderstat_3d step")
-    return Ptot
+
+    # use MPI to get the totals 
+    # the 'totals' array will hold the sum of each 'data' array
+    totals = np.zeros((A, B))
+
+    print "done: {0}".format(rank)
+
+    comm.Allreduce(
+        [Ptot, MPI.DOUBLE],
+        [totals, MPI.DOUBLE],
+        op = MPI.SUM
+        )
+
+
+
+    return totals
+
+
+def _get_list_entries_for_this_rank(lists):
+
+    # Each rank will perform a number entries from the first lists entry
+    # Divide the nr of items in first entry of the list
+    comm = MPI.COMM_WORLD
+    size = comm.Get_size()
+    rank = comm.Get_rank()
+
+    nr_first_list_entries = len(lists)
+
+    entries_per_rank = nr_first_list_entries / size
+    left_over_entries = nr_first_list_entries % size  # add on depending on rank
+
+
+    list_range = []
+    last_to = 0
+    for idx in range(0,size):
+        entries_this_rank = entries_per_rank
+        if idx < left_over_entries:
+            entries_this_rank += 1
+
+        entry_from = last_to  
+        entry_to = entry_from + entries_this_rank
+        list_range.append([entry_from, entry_to])
+        last_to = entry_to
+
+
+    from_for_this_rank = list_range[rank][0]
+    to_for_this_rank = list_range[rank][1]
+
+
+    first_list = lists[from_for_this_rank:to_for_this_rank]
+
+    return first_list
+
 
 
 def _pmat_neighbors(mat, filter_shape, nr_largest=None, diag=0):
