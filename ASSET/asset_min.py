@@ -102,16 +102,18 @@ MultiTimer("mask_matrices")
 cmat = asset.cluster_matrix_entries(mmat, eps, minsize, stretch)
 MultiTimer("cluster_matrix_entries")
 
-# Extract the SSEs from the cluster matrix
-sse_found = asset.extract_sse(sts, xx, yy, cmat)
 
-MultiTimer("extract_sse")
-print sse_found
-
-file = open("sse_found", "w")
-
-file.write(str(sse_found))
-
-file.close()
 if rank == 0:
+    # Extract the SSEs from the cluster matrix
+    sse_found = asset.extract_sse(sts, xx, yy, cmat)
+
+    MultiTimer("extract_sse")
+    print sse_found
+
+    file = open("sse_found", "w")
+
+    file.write(str(sse_found))
+
+    file.close()
+
     MultiTimer("end").print_timings()

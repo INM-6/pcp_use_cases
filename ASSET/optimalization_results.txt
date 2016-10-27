@@ -6,5 +6,21 @@ runtime(sec) version github
 25,  mpi randomized (20, login)
 22.6 mpi (24, login)
 19.6 mpi (28, login)
-111 mpi (28, knl)
-174 mpi (256, knl)
+111 mpi (28, knl - homebuild)
+174 mpi (256, knl - homebuild)
+
+24.8 mpi (28, login)
+
+22.5 No calculations done (1, login)
+
+
+86, approximate, login
+83, approximate inplace, login
+59, ordered list
+57.6, extra test
+53, reshape first
+49, zeros fill
+42, exp_aproximate
+36, spurious copy
+29.2, log + multi
+

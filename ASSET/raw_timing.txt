@@ -67,3 +67,354 @@ First mpi version with loop on first lists entry
   0 :  : extract_sse : 1 : 0.000142097473145
   0 :  : end : 1 : 0.00705695152283
 Total time : 71.4455969334
+
+# randomized host assignment,
+% : name : (count) : total time spend
+  0 :  : import : 1 : 0.0
+  0 :  : init : 1 : 0.000231027603149
+  0 :  : generate data : 1 : 0.036712884903
+  0 :  : intersection_matrix : 1 : 0.0505349636078
+ 19 :  : prob_method : 1 : 4.64912199974
+  0 :  :     joint_probability_matrix  _pmat_neighbors init  : 1 : 0.000594139099121
+  0 :    :     joint_probability_matrix  _pmat_neighbors flatten  : 196 : 0.0537090301514
+  0 :    :     joint_probability_matrix  _pmat_neighbors sort  : 196 : 0.00745558738708
+  0 :    :     joint_probability_matrix  _pmat_neighbors step  : 196 : 0.000830173492432
+  0 :  :   joint_probability_matrix  _pmat_neighbors : 1 : 9.05990600586e-06
+  0 :  :   joint_probability_matrix  _jsf_uniform_orderstat_3d init : 1 : 0.00241303443909
+  4 :    :     joint_probability_matrix  _jsf_uniform_orderstat_3d diff : 49835 : 1.07725405693
+  5 :    :     joint_probability_matrix  _jsf_uniform_orderstat_3d reshape : 1021 : 1.2765147686
+  9 :    :     joint_probability_matrix  _jsf_uniform_orderstat_3d sum : 1021 : 2.16815781593
+ 39 :    :     joint_probability_matrix  _jsf_uniform_orderstat_3d log_DU2 : 1021 : 9.5784277916
+  7 :    :     joint_probability_matrix  _jsf_uniform_orderstat_3d prod_DU2 : 1021 : 1.72564101219
+  3 :    :     joint_probability_matrix  _jsf_uniform_orderstat_3d sum_DU2 : 1021 : 0.693351745605
+  1 :    :     joint_probability_matrix  _jsf_uniform_orderstat_3d log : 1021 : 0.165413856506
+  3 :    :     joint_probability_matrix  _jsf_uniform_orderstat_3d exp : 1021 : 0.790061950684
+  1 :    :     joint_probability_matrix  _jsf_uniform_orderstat_3d step : 49835 : 0.331900119781
+  9 :  :   joint_probability_matrix  _jsf_uniform_orderstat_3d : 1 : 2.20389699936
+  0 :  : joint_probability_matrix : 1 : 0.000332832336426
+  0 :  : mask_matrices : 1 : 0.00118017196655
+  0 :  : cluster_matrix_entries : 1 : 0.000171899795532
+  0 :  : extract_sse : 1 : 0.000209093093872
+  0 :  : end : 1 : 0.00139784812927
+Total time : 24.8155238628
+Aproximate solution
+% : name : (count) : total time spend
+  0 :  : import : 1 : 0.0
+  0 :  : init : 1 : 0.000139951705933
+  0 :  : generate data : 1 : 0.0216200351715
+  0 :  : intersection_matrix : 1 : 0.0461020469666
+  5 :  : prob_method : 1 : 4.10475492477
+  0 :  :     joint_probability_matrix  _pmat_neighbors init  : 1 : 0.000181198120117
+  0 :    :     joint_probability_matrix  _pmat_neighbors flatten  : 196 : 0.0475549697876
+  0 :    :     joint_probability_matrix  _pmat_neighbors sort  : 196 : 0.0067675113678
+  0 :    :     joint_probability_matrix  _pmat_neighbors step  : 196 : 0.000699520111084
+  0 :  :   joint_probability_matrix  _pmat_neighbors : 1 : 1.90734863281e-06
+  0 :  :   joint_probability_matrix  _jsf_uniform_orderstat_3d init : 1 : 0.000866889953613
+ 31 :    :     joint_probability_matrix  _jsf_uniform_orderstat_3d diff : 1395360 : 26.3334655762
+ 22 :    :     joint_probability_matrix  _jsf_uniform_orderstat_3d reshape : 31878 : 18.7765371799
+  5 :    :     joint_probability_matrix  _jsf_uniform_orderstat_3d sum : 31878 : 4.51272654533
+  9 :    :     joint_probability_matrix  _jsf_uniform_orderstat_3d log_DU2 : 63756 : 7.66696882248
+  9 :    :     joint_probability_matrix  _jsf_uniform_orderstat_3d prod_DU2 : 31878 : 7.49503231049
+  6 :    :     joint_probability_matrix  _jsf_uniform_orderstat_3d sum_DU2 : 31878 : 5.4602804184
+  1 :    :     joint_probability_matrix  _jsf_uniform_orderstat_3d log : 31878 : 0.890144348145
+ 12 :    :     joint_probability_matrix  _jsf_uniform_orderstat_3d exp : 31878 : 9.98428869247
+  1 :    :     joint_probability_matrix  _jsf_uniform_orderstat_3d step : 31878 : 0.937742233276
+  0 :  :   joint_probability_matrix  _jsf_uniform_orderstat_3d : 1 : 1.28746032715e-05
+  0 :  : joint_probability_matrix : 1 : 4.00543212891e-05
+  0 :  : mask_matrices : 1 : 0.000303030014038
+  0 :  : cluster_matrix_entries : 1 : 6.50882720947e-05
+  0 :  : extract_sse : 1 : 2.88486480713e-05
+  0 :  : end : 1 : 0.00198316574097
+Total time : 86.2883081436
+
+Aproximate solution inplace
+% : name : (count) : total time spend
+  0 :  : import : 1 : 0.0
+  0 :  : init : 1 : 0.000186920166016
+  0 :  : generate data : 1 : 0.0227630138397
+  0 :  : intersection_matrix : 1 : 0.0437989234924
+  5 :  : prob_method : 1 : 4.09679818153
+  0 :  :     joint_probability_matrix  _pmat_neighbors init  : 1 : 0.000257968902588
+  0 :    :     joint_probability_matrix  _pmat_neighbors flatten  : 196 : 0.0495562553406
+  0 :    :     joint_probability_matrix  _pmat_neighbors sort  : 196 : 0.00667524337769
+  0 :    :     joint_probability_matrix  _pmat_neighbors step  : 196 : 0.000680446624756
+  0 :  :   joint_probability_matrix  _pmat_neighbors : 1 : 3.09944152832e-06
+  0 :  :   joint_probability_matrix  _jsf_uniform_orderstat_3d init : 1 : 0.00120496749878
+ 31 :    :     joint_probability_matrix  _jsf_uniform_orderstat_3d diff : 1395360 : 26.4104077816
+ 22 :    :     joint_probability_matrix  _jsf_uniform_orderstat_3d reshape : 31878 : 18.6945400238
+  5 :    :     joint_probability_matrix  _jsf_uniform_orderstat_3d sum : 31878 : 4.42703342438
+  4 :    :     joint_probability_matrix  _jsf_uniform_orderstat_3d downcast : 31878 : 3.14027786255
+  3 :    :     joint_probability_matrix  _jsf_uniform_orderstat_3d log_DU2 : 31878 : 2.38566541672
+  9 :    :     joint_probability_matrix  _jsf_uniform_orderstat_3d prod_DU2 : 31878 : 7.56302499771
+  6 :    :     joint_probability_matrix  _jsf_uniform_orderstat_3d sum_DU2 : 31878 : 5.34998202324
+  1 :    :     joint_probability_matrix  _jsf_uniform_orderstat_3d log : 31878 : 0.878792762756
+ 12 :    :     joint_probability_matrix  _jsf_uniform_orderstat_3d exp : 31878 : 9.97001814842
+  1 :    :     joint_probability_matrix  _jsf_uniform_orderstat_3d step : 31878 : 0.904102563858
+  0 :  :   joint_probability_matrix  _jsf_uniform_orderstat_3d : 1 : 1.50203704834e-05
+  0 :  : joint_probability_matrix : 1 : 4.48226928711e-05
+  0 :  : mask_matrices : 1 : 0.000303983688354
+  0 :  : cluster_matrix_entries : 1 : 6.41345977783e-05
+  0 :  : extract_sse : 1 : 2.78949737549e-05
+  0 :  : end : 1 : 0.000463962554932
+Total time : 83.9466898441
+
+if try to test for incorrect order of list(i)
+% : name : (count) : total time spend
+  0 :  : import : 1 : 0.0
+  0 :  : init : 1 : 0.000200986862183
+  0 :  : generate data : 1 : 0.0304191112518
+  0 :  : intersection_matrix : 1 : 0.047513961792
+  7 :  : prob_method : 1 : 4.15056610107
+  0 :  :     joint_probability_matrix  _pmat_neighbors init  : 1 : 0.000273942947388
+  0 :    :     joint_probability_matrix  _pmat_neighbors flatten  : 196 : 0.0492453575134
+  0 :    :     joint_probability_matrix  _pmat_neighbors sort  : 196 : 0.00691866874695
+  0 :    :     joint_probability_matrix  _pmat_neighbors step  : 196 : 0.000694036483765
+  0 :  :   joint_probability_matrix  _pmat_neighbors : 1 : 2.86102294922e-06
+  0 :  :   joint_probability_matrix  _jsf_uniform_orderstat_3d init : 1 : 0.00132703781128
+  2 :    :     joint_probability_matrix  _jsf_uniform_orderstat_3d diff : 31878 : 1.0000398159
+ 32 :    :     joint_probability_matrix  _jsf_uniform_orderstat_3d reshape : 31878 : 18.9878907204
+  8 :    :     joint_probability_matrix  _jsf_uniform_orderstat_3d sum : 31878 : 4.50324392319
+  5 :    :     joint_probability_matrix  _jsf_uniform_orderstat_3d downcast : 31878 : 3.19585847855
+  4 :    :     joint_probability_matrix  _jsf_uniform_orderstat_3d log_DU2 : 31878 : 2.42207026482
+ 13 :    :     joint_probability_matrix  _jsf_uniform_orderstat_3d prod_DU2 : 31878 : 7.63468003273
+  9 :    :     joint_probability_matrix  _jsf_uniform_orderstat_3d sum_DU2 : 31878 : 5.43009638786
+  2 :    :     joint_probability_matrix  _jsf_uniform_orderstat_3d log : 31878 : 0.905013084412
+ 17 :    :     joint_probability_matrix  _jsf_uniform_orderstat_3d exp : 31878 : 10.0163972378
+  2 :    :     joint_probability_matrix  _jsf_uniform_orderstat_3d step : 31878 : 0.919435977936
+  0 :  :   joint_probability_matrix  _jsf_uniform_orderstat_3d : 1 : 1.50203704834e-05
+  0 :  : joint_probability_matrix : 1 : 4.50611114502e-05
+  0 :  : mask_matrices : 1 : 0.000247955322266
+  0 :  : cluster_matrix_entries : 1 : 6.41345977783e-05
+  0 :  : extract_sse : 1 : 2.69412994385e-05
+  0 :  : end : 1 : 0.00198483467102
+Total time : 59.3042719364
+remove extra test
+% : name : (count) : total time spend
+  0 :  : import : 1 : 0.0
+  0 :  : init : 1 : 0.00016188621521
+  0 :  : generate data : 1 : 0.0205490589142
+  0 :  : intersection_matrix : 1 : 0.0425050258636
+  7 :  : prob_method : 1 : 3.96879005432
+  0 :  :     joint_probability_matrix  _pmat_neighbors init  : 1 : 0.000339031219482
+  0 :    :     joint_probability_matrix  _pmat_neighbors flatten  : 196 : 0.0470983982086
+  0 :    :     joint_probability_matrix  _pmat_neighbors sort  : 196 : 0.00659036636353
+  0 :    :     joint_probability_matrix  _pmat_neighbors step  : 196 : 0.000659227371216
+  0 :  :   joint_probability_matrix  _pmat_neighbors : 1 : 1.90734863281e-06
+  0 :  :   joint_probability_matrix  _jsf_uniform_orderstat_3d init : 1 : 0.00107908248901
+ 31 :    :     joint_probability_matrix  _jsf_uniform_orderstat_3d reshape : 31878 : 17.8485519886
+  2 :    :     joint_probability_matrix  _jsf_uniform_orderstat_3d factorial : 31878 : 1.38867306709
+  8 :    :     joint_probability_matrix  _jsf_uniform_orderstat_3d sum : 31878 : 4.40126419067
+  5 :    :     joint_probability_matrix  _jsf_uniform_orderstat_3d downcast : 31878 : 3.10638546944
+  4 :    :     joint_probability_matrix  _jsf_uniform_orderstat_3d log_DU2 : 31878 : 2.37783789635
+ 13 :    :     joint_probability_matrix  _jsf_uniform_orderstat_3d prod_DU2 : 31878 : 7.35278511047
+  9 :    :     joint_probability_matrix  _jsf_uniform_orderstat_3d sum_DU2 : 31878 : 5.30420732498
+  2 :    :     joint_probability_matrix  _jsf_uniform_orderstat_3d log : 31878 : 0.86559510231
+ 17 :    :     joint_probability_matrix  _jsf_uniform_orderstat_3d exp : 31878 : 9.99631118774
+  2 :    :     joint_probability_matrix  _jsf_uniform_orderstat_3d step : 31878 : 0.87118768692
+  0 :  :   joint_probability_matrix  _jsf_uniform_orderstat_3d : 1 : 1.59740447998e-05
+  0 :  : joint_probability_matrix : 1 : 4.48226928711e-05
+  0 :  : mask_matrices : 1 : 0.000315189361572
+  0 :  : cluster_matrix_entries : 1 : 7.20024108887e-05
+  0 :  : extract_sse : 1 : 2.78949737549e-05
+  0 :  : end : 1 : 0.00211191177368
+Total time : 57.6031608582
+
+first reshape rewrite
+% : name : (count) : total time spend
+  0 :  : import : 1 : 0.0
+  0 :  : init : 1 : 0.000234842300415
+  0 :  : generate data : 1 : 0.0311090946198
+  0 :  : intersection_matrix : 1 : 0.0596489906311
+  8 :  : prob_method : 1 : 4.2144548893
+  0 :  :     joint_probability_matrix  _pmat_neighbors init  : 1 : 0.000247001647949
+  0 :    :     joint_probability_matrix  _pmat_neighbors flatten  : 196 : 0.0471861362457
+  0 :    :     joint_probability_matrix  _pmat_neighbors sort  : 196 : 0.0067412853241
+  0 :    :     joint_probability_matrix  _pmat_neighbors step  : 196 : 0.000681638717651
+  0 :  :   joint_probability_matrix  _pmat_neighbors : 1 : 4.05311584473e-06
+  0 :  :   joint_probability_matrix  _jsf_uniform_orderstat_3d init : 1 : 0.00125598907471
+ 23 :    :     joint_probability_matrix  _jsf_uniform_orderstat_3d reshape : 31878 : 12.2460894585
+  3 :    :     joint_probability_matrix  _jsf_uniform_orderstat_3d factorial : 31878 : 1.41642212868
+  8 :    :     joint_probability_matrix  _jsf_uniform_orderstat_3d sum : 31878 : 4.48048400879
+  6 :    :     joint_probability_matrix  _jsf_uniform_orderstat_3d downcast : 31878 : 3.18583893776
+  5 :    :     joint_probability_matrix  _jsf_uniform_orderstat_3d log_DU2 : 31878 : 2.40497875214
+ 15 :    :     joint_probability_matrix  _jsf_uniform_orderstat_3d prod_DU2 : 31878 : 7.76315045357
+ 10 :    :     joint_probability_matrix  _jsf_uniform_orderstat_3d sum_DU2 : 31878 : 5.41858816147
+  2 :    :     joint_probability_matrix  _jsf_uniform_orderstat_3d log : 31878 : 0.883372783661
+ 19 :    :     joint_probability_matrix  _jsf_uniform_orderstat_3d exp : 31878 : 10.0127885342
+  2 :    :     joint_probability_matrix  _jsf_uniform_orderstat_3d step : 31878 : 0.908488750458
+  0 :  :   joint_probability_matrix  _jsf_uniform_orderstat_3d : 1 : 1.4066696167e-05
+  0 :  : joint_probability_matrix : 1 : 4.6968460083e-05
+  0 :  : mask_matrices : 1 : 0.000294923782349
+  0 :  : cluster_matrix_entries : 1 : 7.10487365723e-05
+  0 :  : extract_sse : 1 : 2.69412994385e-05
+  0 :  : end : 1 : 0.00201296806335
+Total time : 53.0842328072
+
+
+fill and zeros
+% : name : (count) : total time spend
+  0 :  : import : 1 : 0.0
+  0 :  : init : 1 : 0.000138998031616
+  0 :  : generate data : 1 : 0.0204081535339
+  0 :  : intersection_matrix : 1 : 0.0428738594055
+  9 :  : prob_method : 1 : 4.43305110931
+  0 :  :     joint_probability_matrix  _pmat_neighbors init  : 1 : 0.000380992889404
+  0 :    :     joint_probability_matrix  _pmat_neighbors flatten  : 196 : 0.0505886077881
+  0 :    :     joint_probability_matrix  _pmat_neighbors sort  : 196 : 0.00697684288025
+  0 :    :     joint_probability_matrix  _pmat_neighbors step  : 196 : 0.000722646713257
+  0 :  :   joint_probability_matrix  _pmat_neighbors : 1 : 2.86102294922e-06
+  0 :  :   joint_probability_matrix  _jsf_uniform_orderstat_3d init : 1 : 0.00123810768127
+ 18 :    :     joint_probability_matrix  _jsf_uniform_orderstat_3d reshape : 31878 : 9.02448749542
+  3 :    :     joint_probability_matrix  _jsf_uniform_orderstat_3d factorial : 31878 : 1.32904815674
+  9 :    :     joint_probability_matrix  _jsf_uniform_orderstat_3d sum : 31878 : 4.43106746674
+  6 :    :     joint_probability_matrix  _jsf_uniform_orderstat_3d downcast : 31878 : 3.12915492058
+  5 :    :     joint_probability_matrix  _jsf_uniform_orderstat_3d log_DU2 : 31878 : 2.37703275681
+ 15 :    :     joint_probability_matrix  _jsf_uniform_orderstat_3d prod_DU2 : 31878 : 7.38423442841
+ 11 :    :     joint_probability_matrix  _jsf_uniform_orderstat_3d sum_DU2 : 31878 : 5.30896925926
+  2 :    :     joint_probability_matrix  _jsf_uniform_orderstat_3d log : 31878 : 0.867610454559
+ 20 :    :     joint_probability_matrix  _jsf_uniform_orderstat_3d exp : 31878 : 9.98023247719
+  2 :    :     joint_probability_matrix  _jsf_uniform_orderstat_3d step : 31878 : 0.893512487411
+  0 :  :   joint_probability_matrix  _jsf_uniform_orderstat_3d : 1 : 1.31130218506e-05
+  0 :  : joint_probability_matrix : 1 : 5.19752502441e-05
+  0 :  : mask_matrices : 1 : 0.00029993057251
+  0 :  : cluster_matrix_entries : 1 : 7.10487365723e-05
+  0 :  : extract_sse : 1 : 2.78949737549e-05
+  0 :  : end : 1 : 0.00218105316162
+Total time : 49.2843770981
+
+
+exp_aproximate
+{}
+% : name : (count) : total time spend
+  0 :  : import : 1 : 0.0
+  0 :  : init : 1 : 0.000348091125488
+  0 :  : generate data : 1 : 0.0469210147858
+  0 :  : intersection_matrix : 1 : 0.078253030777
+ 10 :  : prob_method : 1 : 4.2865087986
+  0 :  :     joint_probability_matrix  _pmat_neighbors init  : 1 : 0.000184059143066
+  0 :    :     joint_probability_matrix  _pmat_neighbors flatten  : 196 : 0.047632932663
+  0 :    :     joint_probability_matrix  _pmat_neighbors sort  : 196 : 0.00676822662354
+  0 :    :     joint_probability_matrix  _pmat_neighbors step  : 196 : 0.000731945037842
+  0 :  :   joint_probability_matrix  _pmat_neighbors : 1 : 1.90734863281e-06
+  0 :  :   joint_probability_matrix  _jsf_uniform_orderstat_3d init : 1 : 0.000859022140503
+ 22 :    :     joint_probability_matrix  _jsf_uniform_orderstat_3d reshape : 31878 : 9.20789337158
+  3 :    :     joint_probability_matrix  _jsf_uniform_orderstat_3d factorial : 31878 : 1.37824344635
+ 11 :    :     joint_probability_matrix  _jsf_uniform_orderstat_3d sum : 31878 : 4.48286652565
+  7 :    :     joint_probability_matrix  _jsf_uniform_orderstat_3d downcast : 31878 : 3.16610217094
+  6 :    :     joint_probability_matrix  _jsf_uniform_orderstat_3d log_DU2 : 31878 : 2.38891720772
+ 18 :    :     joint_probability_matrix  _jsf_uniform_orderstat_3d prod_DU2 : 31878 : 7.62451434135
+ 13 :    :     joint_probability_matrix  _jsf_uniform_orderstat_3d sum_DU2 : 31878 : 5.3911049366
+  2 :    :     joint_probability_matrix  _jsf_uniform_orderstat_3d log : 31878 : 0.881205320358
+  5 :    :     joint_probability_matrix  _jsf_uniform_orderstat_3d exp : 31878 : 2.11534357071
+  3 :    :     joint_probability_matrix  _jsf_uniform_orderstat_3d step : 31878 : 1.3268840313
+  0 :  :   joint_probability_matrix  _jsf_uniform_orderstat_3d : 1 : 1.21593475342e-05
+  0 :  : joint_probability_matrix : 1 : 4.6968460083e-05
+  0 :  : mask_matrices : 1 : 0.000277042388916
+  0 :  : cluster_matrix_entries : 1 : 7.20024108887e-05
+  0 :  : extract_sse : 1 : 2.59876251221e-05
+  0 :  : end : 1 : 0.0023238658905
+Total time : 42.4340419769
+
+spurious copy
+% : name : (count) : total time spend
+  0 :  : import : 1 : 0.0
+  0 :  : init : 1 : 0.000257015228271
+  0 :  : generate data : 1 : 0.031614780426
+  0 :  : intersection_matrix : 1 : 0.0589611530304
+ 11 :  : prob_method : 1 : 4.2002799511
+  0 :  :     joint_probability_matrix  _pmat_neighbors init  : 1 : 0.000344038009644
+  0 :    :     joint_probability_matrix  _pmat_neighbors flatten  : 196 : 0.0497636795044
+  0 :    :     joint_probability_matrix  _pmat_neighbors sort  : 196 : 0.00669646263123
+  0 :    :     joint_probability_matrix  _pmat_neighbors step  : 196 : 0.000699758529663
+  0 :  :   joint_probability_matrix  _pmat_neighbors : 1 : 4.05311584473e-06
+  0 :  :   joint_probability_matrix  _jsf_uniform_orderstat_3d init : 1 : 0.00109791755676
+  3 :    :     joint_probability_matrix  _jsf_uniform_orderstat_3d diff : 31878 : 0.945049762726
+  0 :    :     joint_probability_matrix  _jsf_uniform_orderstat_3d loop_prepare : 31878 : 0.0390188694
+  8 :    :     joint_probability_matrix  _jsf_uniform_orderstat_3d reshape : 31878 : 3.08512878418
+  3 :    :     joint_probability_matrix  _jsf_uniform_orderstat_3d factorial : 31878 : 1.27069234848
+ 12 :    :     joint_probability_matrix  _jsf_uniform_orderstat_3d sum : 31878 : 4.37655735016
+  9 :    :     joint_probability_matrix  _jsf_uniform_orderstat_3d downcast : 31878 : 3.13668894768
+  6 :    :     joint_probability_matrix  _jsf_uniform_orderstat_3d log_DU2 : 31878 : 2.34271287918
+ 20 :    :     joint_probability_matrix  _jsf_uniform_orderstat_3d prod_DU2 : 31878 : 7.4861125946
+ 15 :    :     joint_probability_matrix  _jsf_uniform_orderstat_3d sum_DU2 : 31878 : 5.33396887779
+  2 :    :     joint_probability_matrix  _jsf_uniform_orderstat_3d log : 31878 : 0.869723796844
+  6 :    :     joint_probability_matrix  _jsf_uniform_orderstat_3d exp : 31878 : 2.07414960861
+  3 :    :     joint_probability_matrix  _jsf_uniform_orderstat_3d step : 31878 : 1.25120615959
+  0 :  :   joint_probability_matrix  _jsf_uniform_orderstat_3d : 1 : 1.00135803223e-05
+  0 :  : joint_probability_matrix : 1 : 3.81469726562e-05
+  0 :  : mask_matrices : 1 : 0.000248908996582
+  0 :  : cluster_matrix_entries : 1 : 7.29560852051e-05
+  0 :  : extract_sse : 1 : 2.59876251221e-05
+  0 :  : end : 1 : 0.00204420089722
+Total time : 36.5631690025
+
+multiply in cython
+
+{}
+% : name : (count) : total time spend
+  0 :  : import : 1 : 0.0
+  0 :  : init : 1 : 0.00020694732666
+  0 :  : generate data : 1 : 0.0245900154114
+  0 :  : intersection_matrix : 1 : 0.0440149307251
+ 12 :  : prob_method : 1 : 4.05222392082
+  0 :  :     joint_probability_matrix  _pmat_neighbors init  : 1 : 0.000349044799805
+  0 :    :     joint_probability_matrix  _pmat_neighbors flatten  : 196 : 0.0490128993988
+  0 :    :     joint_probability_matrix  _pmat_neighbors sort  : 196 : 0.00670218467712
+  0 :    :     joint_probability_matrix  _pmat_neighbors step  : 196 : 0.000674962997437
+  0 :  :   joint_probability_matrix  _pmat_neighbors : 1 : 2.86102294922e-06
+  0 :  :   joint_probability_matrix  _jsf_uniform_orderstat_3d init : 1 : 0.00107717514038
+  3 :    :     joint_probability_matrix  _jsf_uniform_orderstat_3d diff : 31878 : 0.931374549866
+  0 :    :     joint_probability_matrix  _jsf_uniform_orderstat_3d loop_prepare : 31878 : 0.0398890972137
+  9 :    :     joint_probability_matrix  _jsf_uniform_orderstat_3d reshape : 31878 : 3.19365668297
+  4 :    :     joint_probability_matrix  _jsf_uniform_orderstat_3d factorial : 31878 : 1.2878074646
+ 13 :    :     joint_probability_matrix  _jsf_uniform_orderstat_3d sum : 31878 : 4.46681427956
+  9 :    :     joint_probability_matrix  _jsf_uniform_orderstat_3d downcast : 31878 : 3.16832566261
+  7 :    :     joint_probability_matrix  _jsf_uniform_orderstat_3d log_DU2 : 31878 : 2.37869358063
+ 24 :    :     joint_probability_matrix  _jsf_uniform_orderstat_3d prod_DU2 : 31878 : 8.23860144615
+  8 :    :     joint_probability_matrix  _jsf_uniform_orderstat_3d sum_DU2 : 31878 : 2.54616689682
+  2 :    :     joint_probability_matrix  _jsf_uniform_orderstat_3d log : 31878 : 0.52093911171
+  4 :    :     joint_probability_matrix  _jsf_uniform_orderstat_3d exp : 31878 : 1.50881028175
+  4 :    :     joint_probability_matrix  _jsf_uniform_orderstat_3d step : 31878 : 1.267182827
+  0 :  :   joint_probability_matrix  _jsf_uniform_orderstat_3d : 1 : 1.21593475342e-05
+  0 :  : joint_probability_matrix : 1 : 7.48634338379e-05
+  0 :  : mask_matrices : 1 : 0.000344038009644
+  0 :  : cluster_matrix_entries : 1 : 7.89165496826e-05
+  0 :  : extract_sse : 1 : 2.8133392334e-05
+  0 :  : end : 1 : 0.0018949508667
+Total time : 33.7295498848
+
+log and multiply in one go
+{}
+% : name : (count) : total time spend
+  0 :  : import : 1 : 0.0
+  0 :  : init : 1 : 0.000155210494995
+  0 :  : generate data : 1 : 0.021892786026
+  0 :  : intersection_matrix : 1 : 0.0439620018005
+ 14 :  : prob_method : 1 : 4.11293005943
+  0 :  :     joint_probability_matrix  _pmat_neighbors init  : 1 : 0.000332117080688
+  0 :    :     joint_probability_matrix  _pmat_neighbors flatten  : 196 : 0.0472555160522
+  0 :    :     joint_probability_matrix  _pmat_neighbors sort  : 196 : 0.00675988197327
+  0 :    :     joint_probability_matrix  _pmat_neighbors step  : 196 : 0.000707626342773
+  0 :  :   joint_probability_matrix  _pmat_neighbors : 1 : 2.86102294922e-06
+  0 :  :   joint_probability_matrix  _jsf_uniform_orderstat_3d init : 1 : 0.00137209892273
+  3 :    :     joint_probability_matrix  _jsf_uniform_orderstat_3d diff : 31878 : 0.954562187195
+  0 :    :     joint_probability_matrix  _jsf_uniform_orderstat_3d loop_prepare : 31878 : 0.039990901947
+ 11 :    :     joint_probability_matrix  _jsf_uniform_orderstat_3d reshape : 31878 : 3.13592123985
+  4 :    :     joint_probability_matrix  _jsf_uniform_orderstat_3d factorial : 31878 : 1.28425836563
+ 15 :    :     joint_probability_matrix  _jsf_uniform_orderstat_3d sum : 31878 : 4.42493891716
+ 11 :    :     joint_probability_matrix  _jsf_uniform_orderstat_3d downcast : 31878 : 3.17420172691
+  0 :    :     joint_probability_matrix  _jsf_uniform_orderstat_3d log_DU2 : 31878 : 0.0455801486969
+ 21 :    :     joint_probability_matrix  _jsf_uniform_orderstat_3d prod_DU2 : 31878 : 6.08138418198
+  9 :    :     joint_probability_matrix  _jsf_uniform_orderstat_3d sum_DU2 : 31878 : 2.63389992714
+  2 :    :     joint_probability_matrix  _jsf_uniform_orderstat_3d log : 31878 : 0.515353918076
+  5 :    :     joint_probability_matrix  _jsf_uniform_orderstat_3d exp : 31878 : 1.5054705143
+  4 :    :     joint_probability_matrix  _jsf_uniform_orderstat_3d step : 31878 : 1.2344288826
+  0 :  :   joint_probability_matrix  _jsf_uniform_orderstat_3d : 1 : 1.4066696167e-05
+  0 :  : joint_probability_matrix : 1 : 7.39097595215e-05
+  0 :  : mask_matrices : 1 : 0.000324964523315
+  0 :  : cluster_matrix_entries : 1 : 7.60555267334e-05
+  0 :  : extract_sse : 1 : 2.8133392334e-05
+  0 :  : end : 1 : 0.00219678878784
+Total time : 29.2680749893
+
+

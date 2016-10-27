@@ -50,8 +50,7 @@ import neo
 import itertools
 import elephant.conversion as conv
 import elephant.spike_train_surrogates as spike_train_surrogates
-import cython_lib
-
+from multiprocessing.pool import ThreadPool
 from sklearn.cluster import dbscan as dbscan
 
 from timer import MultiTimer
@@ -1079,7 +1078,10 @@ def probability_matrix_analytical(
     return pmat, xx, yy
 
 
-def _jsf_uniform_orderstat_3d(u, alpha, sample_size):
+
+
+
+def _jsf_uniform_orderstat_3d(u, alpha, n):
     '''
     Considered n independent random variables X1, X2, ..., Xn all having
     uniform distribution in the interval (alpha, 1):
@@ -1107,7 +1109,7 @@ def _jsf_uniform_orderstat_3d(u, alpha, sample_size):
     alpha : float in [0, 1)
         range where the values of `u` are assumed to vary.
         alpha is 0 in the standard ASSET analysis.
-    sample_size : int
+    n : int
         size of the sample where the d largest order statistics u_ij are
         assumed to have been sampled from
 
@@ -1119,21 +1121,19 @@ def _jsf_uniform_orderstat_3d(u, alpha, sample_size):
         Note: the joint probability matrix computed for the ASSET analysis
         is 1-S.
     '''
-    dim_d, dim_A, dim_B = u.shape
-
-
+    d, A, B = u.shape
 
     # Define ranges [1,...,n], [2,...,n], ..., [d,...,n] for the mute variables
     # used to compute the integral as a sum over several possibilities
-    lists = [range(j, sample_size + 1) for j in _xrange(dim_d, 0, -1)]
+    lists = [_xrange(j, n + 1) for j in _xrange(d, 0, -1)]
 
     # Compute the log of the integral's coefficient
-    logK = np.sum(np.log(np.arange(1, sample_size + 1))) - sample_size * np.log(1 - alpha)
+    logK = np.sum(np.log(np.arange(1, n + 1))) - n * np.log(1 - alpha)
 
     # Add to the 3D matrix u a bottom layer identically equal to alpha and a
     # top layer identically equal to 1. Then compute the difference dU along
     # the first dimension.
-    u_extended = np.ones((dim_d + 2, dim_A, dim_B))
+    u_extended = np.ones((d + 2, A, B))
     u_extended[0] = u_extended[0] * alpha
     for layer_idx, uu in enumerate(u):
         u_extended[layer_idx + 1] = u[layer_idx]
@@ -1142,140 +1142,67 @@ def _jsf_uniform_orderstat_3d(u, alpha, sample_size):
 
     # Compute the probabilities at each (a, b), a=0,...,A-1, b=0,...,B-1
     # by matrix algebra, working along the third dimension (axis 0)
-    Ptot = np.zeros((dim_A, dim_B))  # initialize all A x B probabilities to 0
-    
+    Ptot = np.zeros((A, B))  # initialize all A x B probabilities to 0
+    iter_id = 0
     MultiTimer( "  joint_probability_matrix  _jsf_uniform_orderstat_3d init")
 
-    # TODO: With a blunt knive make the code MPI
 
-    # The entries out of the first lists entry we will process on this run
-    #list_entries = _get_list_entries_for_this_rank(lists[2])
+    all_data = zip(itertools.product(*lists), itertools.repeat([n, A, B, dU, logK]))
 
-    dI = np.empty((6, dim_A, dim_B))
-    calculated= 0
-    iter_id = 0
-    for i in itertools.product(*lists):
+    list_of_Ptot = calculateParallel(all_data, 48)
 
-        if (i[0] < i[1] or
-            i[1] < i[2] or
-            i[2] < i[3] or
-            i[3] < i[4]):
-            continue
-
-        iter_id += 1
-        di = -np.diff(np.hstack([sample_size, list(i), 0]))        
-
-        MultiTimer( "    joint_probability_matrix  _jsf_uniform_orderstat_3d diff")
-        #print sample_size, i, list(i), 0
-        #print np.hstack([sample_size, i, 0])
-        #print -np.diff(np.hstack([sample_size, list(i), 0]))
-
-
-        calculated += 1
-
-        MultiTimer( "    joint_probability_matrix  _jsf_uniform_orderstat_3d loop_prepare")
-
-
-        #dI = di.reshape((-1, 1, 1)) * np.ones((dim_A, dim_B))  # shape (d+1, A, B)
-
-        dI[0,:,:].fill(di[0])
-        dI[1,:,:].fill(di[1])
-        dI[2,:,:].fill(di[2])
-        dI[3,:,:].fill(di[3])
-        dI[4,:,:].fill(di[4])
-        dI[5,:,:].fill(di[5])
-
-
-        MultiTimer( "    joint_probability_matrix  _jsf_uniform_orderstat_3d reshape")
-        # Compute for each i=0,...,A-1 and j=0,...,B-1: log(I_ij !)
-        # Creates a matrix log_dIfactorial of shape (A, B)
-        log_di_factorial = np.sum([np.log(np.arange(1, di_k + 1)).sum()
-                            for di_k in di if di_k >= 1])
-
-        MultiTimer( "    joint_probability_matrix  _jsf_uniform_orderstat_3d factorial")
-
-        Ptot += _inner_loop(dI, dU, dim_A, dim_B, logK, log_di_factorial)
-            
-        MultiTimer( "    joint_probability_matrix  _jsf_uniform_orderstat_3d step")
+    for res in list_of_Ptot:
+        Ptot += res
+    MultiTimer( "  joint_probability_matrix  _jsf_uniform_orderstat_3d  looped")
 
     return Ptot
 
+# function to be mapped over
+def calculateParallel(all_data, threads=48):
+    pool = ThreadPool(threads)
+    results = pool.map(_jsf_uniform_orderstat_3d_inner_loop, all_data)
+    pool.close()
+    pool.join()
+    return results
 
-def _inner_loop(dI, dU2, dim_A, dim_B, logK, log_di_factorial):
-
-
-    
-    
-    # for each a=0,1,...,A-1 and b=0,1,...,B-1, replace dU_abk with 1
-    # whenever dI_abk = 0, so that dU_abk ** dI_abk = 1 (this avoids
-    # nans when both dU_abk and dI_abk are 0, and is mathematically
-    # correct). dU2 still contains 0s, so that when below exp(log(U2))
-    # is computed, warnings are arosen; they are no problem though.
-
-    dU2[dI == 0] = 1.
+def _jsf_uniform_orderstat_3d_inner_loop(arguments):
+    [i, static_data] = arguments
+    [n, A, B, dU, logK] = static_data
 
 
-    MultiTimer( "    joint_probability_matrix  _jsf_uniform_orderstat_3d sum")
-    # Compute for each i,j the contribution to the total
-    # probability given by this step, and add it to the total prob.
-    dU2_as_float32 = dU2.astype(np.float32)
-    MultiTimer( "    joint_probability_matrix  _jsf_uniform_orderstat_3d downcast")
-    #dU2log = cython_lib.accelerated.log_approx_array(dU2_as_float32)
-    MultiTimer( "    joint_probability_matrix  _jsf_uniform_orderstat_3d log_DU2")
-    #prod_DU2 = dI * dU2log
+    Ptot = np.zeros((A, B))
+    di = -np.diff(np.hstack([n, list(i), 0]))
+    #MultiTimer( "    joint_probability_matrix  _jsf_uniform_orderstat_3d diff")
+    if np.all(di >= 0):
+        dI = di.reshape((-1, 1, 1)) * np.ones((A, B))  # shape (d+1, A, B)
+        #MultiTimer( "    joint_probability_matrix  _jsf_uniform_orderstat_3d reshape")
+        # for each a=0,1,...,A-1 and b=0,1,...,B-1, replace dU_abk with 1
+        # whenever dI_abk = 0, so that dU_abk ** dI_abk = 1 (this avoids
+        # nans when both dU_abk and dI_abk are 0, and is mathematically
+        # correct). dU2 still contains 0s, so that when below exp(log(U2))
+        # is computed, warnings are arosen; they are no problem though.
+        dU[dI == 0] = 1.
 
-    #prod_DU2 = cython_lib.accelerated.multiply_arrays(dI.astype(np.float32), dU2log.astype(np.float32))
-
-    prod_DU2 = cython_lib.accelerated.log_approx_multiply_array(dU2_as_float32,  dI.astype(np.float32))
-    MultiTimer( "    joint_probability_matrix  _jsf_uniform_orderstat_3d prod_DU2")
-    sum_DU2 = prod_DU2.sum(axis=0)
-    MultiTimer( "    joint_probability_matrix  _jsf_uniform_orderstat_3d sum_DU2")
-    logP = sum_DU2 - log_di_factorial
-    MultiTimer( "    joint_probability_matrix  _jsf_uniform_orderstat_3d log")
-    add_logs = logP + logK
-    add_logs_as_float32 = add_logs.astype(np.float32)
-    output = cython_lib.accelerated.exp_approx_array(add_logs_as_float32)
-    MultiTimer( "    joint_probability_matrix  _jsf_uniform_orderstat_3d exp")
-    return output
-
-
-
-def _get_list_entries_for_this_rank(lists):
-
-    # Each rank will perform a number entries from the first lists entry
-    # Divide the nr of items in first entry of the list
-    comm = MPI.COMM_WORLD
-    size = comm.Get_size()
-    rank = comm.Get_rank()
-
-    nr_first_list_entries = len(lists)
-
-    entries_per_rank = nr_first_list_entries / size
-    left_over_entries = nr_first_list_entries % size  # add on depending on rank
+        # Compute for each i=0,...,A-1 and j=0,...,B-1: log(I_ij !)
+        # Creates a matrix log_dIfactorial of shape (A, B)
+        log_di_factorial = np.sum([np.log(np.arange(1, di_k + 1)).sum()
+                                    for di_k in di if di_k >= 1])
+        #MultiTimer( "    joint_probability_matrix  _jsf_uniform_orderstat_3d sum")
+        # Compute for each i,j the contribution to the total
+        # probability given by this step, and add it to the total prob.
+        log_DU2 = np.log(dU)
+        #MultiTimer( "    joint_probability_matrix  _jsf_uniform_orderstat_3d log_DU2")
+        prod_DU2 = dI * log_DU2
+        #MultiTimer( "    joint_probability_matrix  _jsf_uniform_orderstat_3d prod_DU2")
+        sum_DU2 = prod_DU2.sum(axis=0)
+        #MultiTimer( "    joint_probability_matrix  _jsf_uniform_orderstat_3d sum_DU2")
+        logP = sum_DU2 - log_di_factorial
+        #MultiTimer( "    joint_probability_matrix  _jsf_uniform_orderstat_3d log")
+        Ptot = np.exp(logP + logK)
+        #MultiTimer( "    joint_probability_matrix  _jsf_uniform_orderstat_3d exp")
 
 
-    list_range = []
-    last_to = 0
-    for idx in range(0,size):
-        entries_this_rank = entries_per_rank
-        if idx < left_over_entries:
-            entries_this_rank += 1
-
-        entry_from = last_to  
-        entry_to = entry_from + entries_this_rank
-        list_range.append([entry_from, entry_to])
-        last_to = entry_to
-
-
-    from_for_this_rank = list_range[rank][0]
-    to_for_this_rank = list_range[rank][1]
-
-
-    first_list = lists[from_for_this_rank:to_for_this_rank]
-
-    return first_list
-
-
+    return Ptot
 
 def _pmat_neighbors(mat, filter_shape, nr_largest=None, diag=0):
     '''
