@@ -1122,7 +1122,6 @@ def _jsf_uniform_orderstat_3d(u, alpha, sample_size):
     dim_d, dim_A, dim_B = u.shape
 
 
-
     # Define ranges [1,...,n], [2,...,n], ..., [d,...,n] for the mute variables
     # used to compute the integral as a sum over several possibilities
     lists = [range(j, sample_size + 1) for j in _xrange(dim_d, 0, -1)]
@@ -1154,54 +1153,88 @@ def _jsf_uniform_orderstat_3d(u, alpha, sample_size):
     dI = np.empty((6, dim_A, dim_B))
     calculated= 0
     iter_id = 0
-    for i in itertools.product(*lists):
 
-        if (i[0] < i[1] or
-            i[1] < i[2] or
-            i[2] < i[3] or
-            i[3] < i[4]):
-            continue
+    #raw_values = []
+    #for i in itertools.product(*lists):
 
-        iter_id += 1
-        di = -np.diff(np.hstack([sample_size, list(i), 0]))        
+    #    if (i[0] < i[1] or
+    #        i[1] < i[2] or
+    #        i[2] < i[3] or
+    #        i[3] < i[4]):
+    #        continue
 
-        MultiTimer( "    joint_probability_matrix  _jsf_uniform_orderstat_3d diff")
-        #print sample_size, i, list(i), 0
-        #print np.hstack([sample_size, i, 0])
-        #print -np.diff(np.hstack([sample_size, list(i), 0]))
+    #    iter_id += 1
+    #    di = -np.diff(np.hstack([sample_size, list(i), 0]))        
 
-
-        calculated += 1
-
-        MultiTimer( "    joint_probability_matrix  _jsf_uniform_orderstat_3d loop_prepare")
+    #    MultiTimer( "    joint_probability_matrix  _jsf_uniform_orderstat_3d diff")
+    #    #print sample_size, i, list(i), 0
+    #    #print np.hstack([sample_size, i, 0])
+    #    #print -np.diff(np.hstack([sample_size, list(i), 0]))
 
 
-        #dI = di.reshape((-1, 1, 1)) * np.ones((dim_A, dim_B))  # shape (d+1, A, B)
+    #    calculated += 1
 
-        dI[0,:,:].fill(di[0])
-        dI[1,:,:].fill(di[1])
-        dI[2,:,:].fill(di[2])
-        dI[3,:,:].fill(di[3])
-        dI[4,:,:].fill(di[4])
-        dI[5,:,:].fill(di[5])
+    #    MultiTimer( "    joint_probability_matrix  _jsf_uniform_orderstat_3d loop_prepare")
 
 
-        MultiTimer( "    joint_probability_matrix  _jsf_uniform_orderstat_3d reshape")
-        # Compute for each i=0,...,A-1 and j=0,...,B-1: log(I_ij !)
-        # Creates a matrix log_dIfactorial of shape (A, B)
-        log_di_factorial = np.sum([np.log(np.arange(1, di_k + 1)).sum()
-                            for di_k in di if di_k >= 1])
+    #    #dI = di.reshape((-1, 1, 1)) * np.ones((dim_A, dim_B))  # shape (d+1, A, B)
 
-        MultiTimer( "    joint_probability_matrix  _jsf_uniform_orderstat_3d factorial")
+    #    dI[0,:,:].fill(di[0])
+    #    dI[1,:,:].fill(di[1])
+    #    dI[2,:,:].fill(di[2])
+    #    dI[3,:,:].fill(di[3])
+    #    dI[4,:,:].fill(di[4])
+    #    dI[5,:,:].fill(di[5])
 
-        Ptot += _inner_loop(dI, dU, dim_A, dim_B, logK, log_di_factorial)
+
+    #    MultiTimer( "    joint_probability_matrix  _jsf_uniform_orderstat_3d reshape")
+    #    # Compute for each i=0,...,A-1 and j=0,...,B-1: log(I_ij !)
+    #    # Creates a matrix log_dIfactorial of shape (A, B)
+    #    log_di_factorial = np.sum([np.log(np.arange(1, di_k + 1)).sum()
+    #                        for di_k in di if di_k >= 1])
+
+    #    MultiTimer( "    joint_probability_matrix  _jsf_uniform_orderstat_3d factorial")
+
+    #    Ptot += _inner_loop(dI, dU, dim_A, dim_B, logK, log_di_factorial, raw_values)
             
-        MultiTimer( "    joint_probability_matrix  _jsf_uniform_orderstat_3d step")
+    #    MultiTimer( "    joint_probability_matrix  _jsf_uniform_orderstat_3d step")
+
+
+    import matplotlib.pyplot as plt
+    import collections
+    import math
+    error_array = np.zeros((1e9,1)) 
+    idx = 0
+    for entry in u.flatten():
+        approx_log = cython_lib.accelerated.exp_approx(entry) 
+        python_log = math.exp(entry)
+        error_array[idx] = approx_log - python_log
+        idx += 1
+
+        #if idx > 10000:
+        #    break
+
+    error_array = error_array[:idx]
+
+
+    #for entry in raw_value_nd.flatten():
+    #    entries[entry] += 1
+
+    #print entries
+    #raw_value_nd[raw_value_nd==np.NINF] = 30
+
+    plt.hist(error_array, bins=100)
+    plt.title("histogram of errors between approximation and math.exp()")
+    plt.xlabel("error")
+    plt.ylabel("count")
+    plt.show()
+    
+
 
     return Ptot
 
 
-def _inner_loop(dI, dU2, dim_A, dim_B, logK, log_di_factorial):
+def _inner_loop(dI, dU2, dim_A, dim_B, logK, log_di_factorial, raw_values):
 
 
     
@@ -1234,6 +1267,9 @@ def _inner_loop(dI, dU2, dim_A, dim_B, logK, log_di_factorial):
     MultiTimer( "    joint_probability_matrix  _jsf_uniform_orderstat_3d log")
     add_logs = logP + logK
     add_logs_as_float32 = add_logs.astype(np.float32)
+
+    raw_values.append(add_logs.astype(np.float32))
+
     output = cython_lib.accelerated.exp_approx_array(add_logs_as_float32)
     MultiTimer( "    joint_probability_matrix  _jsf_uniform_orderstat_3d exp")
     return output

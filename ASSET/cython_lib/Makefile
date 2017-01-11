@@ -1,5 +1,5 @@
 #
-# Makefile to only rebuild the extension if *.pyx changes
+# Makefile to only rebuild the extension if *.pyx or *.hpp changes
 #
 CXX = g++
 CYTHON = cython
@@ -18,7 +18,8 @@ endif
 ifeq ($(CXX),g++)
     OPENMPFLAGS = -fopenmp
     OPTFLAGS = -O3 -Wall -march=native -fno-strict-aliasing -fno-associative-math
-    CPPFLAGS += -I/gpfs/homeb/pcp0/pcp0016/.local/lib/python2.7/site-packages/numpy/core/include/
+	CPPFLAGS += $(shell python2-config --includes) $(shell python -c "import numpy; print '-I' + numpy.get_include()")
+	#http://stackoverflow.com/questions/9019580/makefile-for-c-program-that-uses-numpy-extensions
 endif
 
 ifeq ($(CXX),icpc)
@@ -31,7 +32,7 @@ CXXFLAGS += -shared -DPIC -fPIC $(OPTFLAGS) $(OPENMPFLAGS)
 
 # Put all your target modules in here
 #
-MODULES = _routines.pyx
+MODULES = _routines.pyx _routines.hpp
 
 all: $(MODULES:%.pyx=%.so) $(MODULES:%.pyx=%.html)
 

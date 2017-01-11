@@ -127,3 +127,19 @@ def exp_approx_array(np.ndarray[float, ndim=2] input):
                     input.shape[0] * input.shape[1])
 
     return input
+
+cdef extern from "_routines.hpp":
+    float expapprox(float input)
+
+
+@cython.boundscheck(False)
+def exp_approx(float input):
+    """
+    return square of input
+
+    :param input a double
+    :return: square of input
+    """
+    expapprox(input)
+
+    return expapprox(input)
