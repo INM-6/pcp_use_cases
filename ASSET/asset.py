@@ -53,7 +53,7 @@ import elephant.spike_train_surrogates as spike_train_surrogates
 from sklearn.cluster import dbscan as dbscan
 
 from timer import MultiTimer
-
+import cython_lib
 # =============================================================================
 # Some Utility Functions to be dealt with in some way or another
 # =============================================================================
@@ -1155,7 +1155,7 @@ def _jsf_uniform_orderstat_3d(u, alpha, n):
             # is computed, warnings are arosen; they are no problem though.
             dU2 = dU.copy()
             dU2[dI == 0] = 1.
-
+            
             # Compute for each i=0,...,A-1 and j=0,...,B-1: log(I_ij !)
             # Creates a matrix log_dIfactorial of shape (A, B)
             log_di_factorial = np.sum([np.log(np.arange(1, di_k + 1)).sum()
@@ -1163,9 +1163,11 @@ def _jsf_uniform_orderstat_3d(u, alpha, n):
             MultiTimer( "    joint_probability_matrix  _jsf_uniform_orderstat_3d sum")
             # Compute for each i,j the contribution to the total
             # probability given by this step, and add it to the total prob.
-            log_DU2 = np.log(dU2)
+            #log_DU2 = np.log(dU2)
+            dU2_as_float32 = dU2.astype(np.float32)
+            dU2log = cython_lib.accelerated.log_approx_array(dU2_as_float32)
             MultiTimer( "    joint_probability_matrix  _jsf_uniform_orderstat_3d log_DU2")
-            prod_DU2 = dI * log_DU2
+            prod_DU2 = dI * dU2log
             MultiTimer( "    joint_probability_matrix  _jsf_uniform_orderstat_3d prod_DU2")
             sum_DU2 = prod_DU2.sum(axis=0)
             MultiTimer( "    joint_probability_matrix  _jsf_uniform_orderstat_3d sum_DU2")
