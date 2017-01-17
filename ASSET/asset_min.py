@@ -106,4 +106,4 @@ file = open("sse_found", "w")
 file.write(str(sse_found))
 
 file.close()
-MultiTimer("end").print_timings()
+MultiTimer.print_timings(header=True, seperator=",", prefix="")

@@ -44,10 +44,11 @@ extern "C" {
 float exp_cst1 = 2139095040.f;
 float exp_cst2 = 0.f;
 
-/* Relative error bounded by 1e-5 for normalized outputs
-   Returns invalid outputs for nan inputs
-   Continuous error */
+// Relative error bounded by 1e-5 for normalized outputs
+//   Returns invalid outputs for nan inputs
+//   Continuous error
 inline float expapprox(float val) {
+
   union { int i; float f; } xu, xu2;
   float val2, val3, val4, b;
   int val4i;
@@ -59,13 +60,13 @@ inline float expapprox(float val) {
   xu2.i = (val4i & 0x7FFFFF) | 0x3F800000;
   b = xu2.f;
 
-  /* Generated in Sollya with:
-     > f=remez(1-x*exp(-(x-1)*log(2)),
-               [|1,(x-1)*(x-2), (x-1)*(x-2)*x, (x-1)*(x-2)*x*x|],
-               [1,2], exp(-(x-1)*log(2)));
-     > plot(exp((x-1)*log(2))/(f+x)-1, [1,2]);
-     > f+x;
-  */
+  // Generated in Sollya with:
+  //   > f=remez(1-x*exp(-(x-1)*log(2)),
+  //             [|1,(x-1)*(x-2), (x-1)*(x-2)*x, (x-1)*(x-2)*x*x|],
+  //             [1,2], exp(-(x-1)*log(2)));
+  //   > plot(exp((x-1)*log(2))/(f+x)-1, [1,2]);
+  //   > f+x;
+
   return
     xu.f * (0.510397365625862338668154f + b *
             (0.310670891004095530771135f + b *
@@ -88,6 +89,7 @@ inline void expapprox_array(float* input, int entries)
    Continuous error. */
 //
 inline float logapprox(float val) {
+
   union { float f; int i; } valu;
   float exp, addcst, x;
   valu.f = val;
@@ -103,12 +105,12 @@ inline float logapprox(float val) {
 
 
   //Generated in Sollya using :
-  //  > f = remez(log(x)-(x-1)*log(2),
-  //         [|1,(x-1)*(x-2), (x-1)*(x-2)*x, (x-1)*(x-2)*x*x,
-  //            (x-1)*(x-2)*x*x*x|], [1,2], 1, 1e-8);
-  //  > plot(f+(x-1)*log(2)-log(x), [1,2]);
-  // > f+(x-1)*log(2)
- 
+   // > f = remez(log(x)-(x-1)*log(2),
+   //        [|1,(x-1)*(x-2), (x-1)*(x-2)*x, (x-1)*(x-2)*x*x,
+   //           (x-1)*(x-2)*x*x*x|], [1,2], 1, 1e-8);
+   // > plot(f+(x-1)*log(2)-log(x), [1,2]);
+   //> f+(x-1)*log(2)
+
   return
     x * (3.529304993f + x * (-2.461222105f +
       x * (1.130626167f + x * (-0.288739945f +
@@ -116,7 +118,6 @@ inline float logapprox(float val) {
     + (addcst + 0.69314718055995f*exp);
 
 }
-
 
 inline void logapprox_array(float* input, int entries)
 {
