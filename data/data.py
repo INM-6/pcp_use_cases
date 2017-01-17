@@ -36,7 +36,7 @@ def process_single_file(file_base):
         data = [entry.strip() for entry in data]
 
         percent = int(eval(data[0]))
-        name = data[1]
+        name = data[1].split(" ")[-1]  # name can have prepended crap, just take the last part
         count = int(eval(data[2]))
         time = float(eval(data[3]))
 
@@ -45,7 +45,7 @@ def process_single_file(file_base):
 
     # We now have preparsed data
 
-    mean_and_var = []
+    mean = []
     for entry in zip(*collected_data):
         name = entry[0][0]
 
@@ -56,9 +56,9 @@ def process_single_file(file_base):
             times.append(run[2])
             percentage.append(run[1])
 
-        mean_and_var.append((name, numpy.mean(times), numpy.var(times)))
+        mean.append((name, numpy.mean(times)))
 
-    return mean_and_var
+    return mean
 
 if __name__ == "__main__":
 
@@ -67,7 +67,91 @@ if __name__ == "__main__":
         "output_log_exp_cython",
         "output_log_exp_approx"]
 
+    data = []
+    bar_totals = []
 
     for file_base in files_for_parse:
-        print process_single_file(file_base)
-    
+        raw_data_for_single_bar = process_single_file(file_base)
+        # We need to add colors, for now pick white?
+
+        data_for_single_bar = []
+
+        bar_total_single_bar = 0.0
+        for entry in raw_data_for_single_bar:
+            bar_total_single_bar += entry[1]
+            data_for_single_bar.append([entry[1], entry[0], "#ffffff"])
+
+        data.append(data_for_single_bar)
+        bar_totals.append(bar_total_single_bar)
+
+
+
+    emphasis = [[[14,14],[14,14]],    [[14,14],[14,14]],   [[None, None],[None, None]]]
+
+    # The total runtime as the bar labels
+    bar_labels = [str(int(round(entry))) for entry in bar_totals]
+    explosion_labels = []
+    # 'calculate' the explosion labels from the data and the emphasis
+    for idx, entry in enumerate(emphasis):
+        # loop over pairs in the explode/emphasis ranges
+        explode_label_pair = [None, None]
+
+        first_range = entry[0]
+        second_range = entry[1]
+
+        # skip none values
+        if first_range[0] is None or first_range[1] is None:
+            continue
+
+        # Calculate  the sum of the emphasis left
+        sum = 0
+        for range_idx in range(first_range[0], first_range[1]+1):
+            sum += data[idx][range_idx][0]
+
+        explode_label_pair[0] = str(int(round(sum)))
+
+        # Calculate  the sum of the emphasis right
+        sum = 0
+        for range_idx in range(second_range[0], second_range[1]+1):
+            sum += data[idx+1][range_idx][0]
+
+        explode_label_pair[1] = str(int(round(sum)))
+
+        explosion_labels.append(explode_label_pair)
+
+    import cascadedexplodingbarcharts as casbar
+    import matplotlib.pyplot as plt
+
+    exp_barch_tp_set = casbar.exp_barch_tp_set
+    ##############
+    # Type setting
+    # all type setting by adapting global_type_setting
+    exp_barch_tp_set["exploding_line"] = {'color':'k', "ls":'--', "lw":1.0}
+    # important settings: controll from what size bar labels are not drawn
+    exp_barch_tp_set["box_size_text_cutoff"]=0.6
+
+    ##############################
+    # Create a figure get the axis
+    f, ax = plt.subplots()   
+
+    ############################
+    # Main call to functionality
+    casbar.cascaded_exploding_barcharts(ax, data, emphasis, bar_labels, explosion_labels,
+                                 "percentage")
+
+    ##############################
+    # Some additional makeup of the figure
+    plt.title("Total runtime and duration of steps \n for specific optimization stages", fontsize = 17)
+
+    ax.set_xticks([0.2, 1.2, 2.2])
+
+    # Use the file names as xbar labels
+    ax.set_xticklabels(files_for_parse)
+
+    ax.set_yticks([])
+    ax.set_yticklabels([])
+
+    plt.xlim( -.2, plt.xlim()[1] + .2 )
+    plt.ylim(- plt.ylim()[1] / 15,  plt.ylim()[1] + plt.ylim()[1] / 15)
+    plt.show()
+
