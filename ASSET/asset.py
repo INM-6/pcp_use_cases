@@ -1133,7 +1133,15 @@ def _jsf_uniform_orderstat_3d(u, alpha, n):
     u_extended[0] = u_extended[0] * alpha
     for layer_idx, uu in enumerate(u):
         u_extended[layer_idx + 1] = u[layer_idx]
-    dU = np.diff(u_extended, axis=0)  # shape (d+1, A, B)
+
+    ################################
+    # 4a. Create a scratch array to be used later on and
+    # cast to float32
+    dU = np.diff(u_extended, axis=0).astype(np.float32)  # shape (d+1, A, B)
+    # Precalculate all the logs
+    dU = cython_lib.accelerated.log_approx_array(dU)
+
+    dU_scratch = dU.copy()
     del u_extended
 
     # Create the dI matrix outside of the loop
@@ -1189,7 +1197,8 @@ def _jsf_uniform_orderstat_3d(u, alpha, n):
             
             
         ##################################
-        # 1 & 2. a largest
+        # 1 & 2. a largest   
+        # 4a
         # Compute for each i,j the contribution to the total
         # probability given by this step, and add it to the total prob.
         #dU2log = np.log(dU2)
@@ -1199,17 +1208,25 @@ def _jsf_uniform_orderstat_3d(u, alpha, n):
         # nans when both dU_abk and dI_abk are 0, and is mathematically
         # correct). dU2 still contains 0s, so that when below exp(log(U2))
         # is computed, warnings are arosen; they are no problem though.
-        dU2 = dU.copy()
-        dU2[dI == 0] = 1.
+        #dU2 = dU.copy()
+        #dU2[dI == 0] = 1.
 
-        dU2_as_float32 = dU2.astype(np.float32)
-        dU2log = cython_lib.accelerated.log_approx_array(dU2_as_float32)
+        #dU2_as_float32 = dU2.astype(np.float32)
+        np.copyto(dU_scratch, dU)   # In memory copy between nparrays
+        MultiTimer( "    joint_probability_matrix  _jsf_uniform_orderstat_3d log_DU2_copy ")
+        dU_scratch[dI == 0] = np.log(1.)
+        MultiTimer( "    joint_probability_matrix  _jsf_uniform_orderstat_3d log_DU2_ones")
+        
+        #dU2log = cython_lib.accelerated.log_approx_array(dU_scratch)
+        dU2log = dU_scratch
         MultiTimer( "    joint_probability_matrix  _jsf_uniform_orderstat_3d log_DU2")
         ###################################
            
         prod_DU2 = dI * dU2log
         MultiTimer( "    joint_probability_matrix  _jsf_uniform_orderstat_3d prod_DU2")
+
         sum_DU2 = prod_DU2.sum(axis=0)
+
         MultiTimer( "    joint_probability_matrix  _jsf_uniform_orderstat_3d sum_DU2")
         logP = sum_DU2 - log_di_factorial
         MultiTimer( "    joint_probability_matrix  _jsf_uniform_orderstat_3d log")

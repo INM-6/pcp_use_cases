@@ -68,7 +68,9 @@ if __name__ == "__main__":
         "output_log_exp_approx",
         #"output_diff_optimized",  #step 3a
         #"3b_reshape_optimized"    #step 3c
-        "3c_sum_optimized"
+        "3c_sum_optimized",
+        #"4a_copy_optimized"
+        "4b_logprecompute"
         ]
 
     data = []
@@ -97,6 +99,7 @@ if __name__ == "__main__":
     emphasis = [[[[14,14],[14,14]],[[18,18],[18,18]]],    
                 [[[14,14],[14,14]],[[18,18],[18,18]]], 
                 [[[11,13],[11,13]],[[14,14],[14,14]],[[19,19],[19,19]]],
+                [[[14,14],[14,16]]],
                 [None]]
 
     ##########################################################################
