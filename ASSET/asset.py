@@ -1174,7 +1174,7 @@ def _jsf_uniform_orderstat_3d(u, alpha, n):
         for idx in range(len(di)):
             dI[idx,:,:].fill(di[idx])
 
-        MultiTimer( "    joint_probability_matrix  _jsf_uniform_orderstat_3d reshape")
+        MultiTimer( "  joint_probability_matrix  _jsf_uniform_orderstat_3d reshape")
         #########################################################
 
 
