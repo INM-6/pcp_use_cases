@@ -65,7 +65,11 @@ if __name__ == "__main__":
     files_for_parse = [
         "output_original",
         "output_log_exp_cython",
-        "output_log_exp_approx"]
+        "output_log_exp_approx",
+        #"output_diff_optimized",  #step 3a
+        #"3b_reshape_optimized"    #step 3c
+        "3c_sum_optimized"
+        ]
 
     data = []
     bar_totals = []
@@ -88,9 +92,11 @@ if __name__ == "__main__":
     
 
     ########################
-    # Find the index of 
+    # Find the index based on labels in data
+
     emphasis = [[[[14,14],[14,14]],[[18,18],[18,18]]],    
                 [[[14,14],[14,14]],[[18,18],[18,18]]], 
+                [[[11,13],[11,13]],[[14,14],[14,14]]],
                 [None]]
 
     ##########################################################################
@@ -128,8 +134,10 @@ if __name__ == "__main__":
 
             # Some fine tuning of the figure: If the explosion is less then 
             # some value do not print
-            minimum_width = 15
-            if sum >= minimum_width:
+            minimum_height = 12
+            # TODO: This should be as a function of the displayed size
+            # The data height can change allot depending on the raw data
+            if sum >= minimum_height:
                 # Append the label
                 entry[0].append(str(int(round(sum))))
             else:
@@ -141,7 +149,7 @@ if __name__ == "__main__":
             for range_idx in range(second_range[0], second_range[1]+1):
                 sum += data[idx+1][range_idx][0]
 
-            if sum >= minimum_width:
+            if sum >= minimum_height:
                 # Append the label
                 entry[1].append(str(int(round(sum))))
             else:
@@ -180,7 +188,8 @@ if __name__ == "__main__":
     # Some additional makeup of the figure
     plt.title("Total runtime and duration of steps \n for specific optimization stages", fontsize = 17)
 
-    ax.set_xticks([0.2, 1.2, 2.2])
+    xticks = [x + 0.2 for x in range(len(files_for_parse))]
+    ax.set_xticks(xticks)
 
     # Use the file names as xbar labels
     ax.set_xticklabels(files_for_parse)
