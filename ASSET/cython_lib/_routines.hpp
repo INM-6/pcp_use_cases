@@ -174,6 +174,39 @@ inline float sinapprox(float val) {
               2.147840177713078446686267852783203125e-6f))));
 }
 
+
+
+inline void multiplysum_arrays(float* output,
+                         float* input1,
+                         float* input2,
+                         int entries,
+                         int sum_step)
+{
+    // First do the multiply
+    for (int x = 0; x < entries; ++x)
+    {
+        input1[x] *= input2[x];
+    }
+
+    const int one_sumstep = sum_step;
+    const int two_sumstep = 2 *sum_step;
+    const int three_sumstep = 3 * sum_step;
+    const int four_sumstep = 4 * sum_step;
+    const int five_sumstep = 5 * sum_step;
+
+    // Do the sum over the first axis
+    for (int x =0; x < sum_step; ++x)
+    {
+        output[x] = input1[x] +
+                    input1[x + one_sumstep] +
+                    input1[x + two_sumstep] +
+                    input1[x + three_sumstep] +
+                    input1[x + four_sumstep] +
+                    input1[x + five_sumstep ];
+    }
+
+}
+
 #ifdef __cplusplus
 }
 #endif

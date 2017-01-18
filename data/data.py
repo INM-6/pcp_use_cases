@@ -70,7 +70,8 @@ if __name__ == "__main__":
         #"3b_reshape_optimized"    #step 3c
         "3c_sum_optimized",
         #"4a_copy_optimized"
-        "4b_logprecompute"
+        "4b_logprecompute",
+        "5b_float32"
         ]
 
     data = []
@@ -100,11 +101,13 @@ if __name__ == "__main__":
                 [[[14,14],[14,14]],[[18,18],[18,18]]], 
                 [[[11,13],[11,13]],[[14,14],[14,14]],[[19,19],[19,19]]],
                 [[[14,14],[14,16]]],
-                [None]]
+                [[[12,12],[12,12]],[[17,18],[17,18]],[[19,20],[19,20]]],
+                [None],
+                ]
 
     ##########################################################################
     # The total runtime as the bar labels
-    bar_labels = [str(int(round(entry))) for entry in bar_totals]
+    bar_labels = [str(int(round(entry)))+"s" for entry in bar_totals]
 
 
 
@@ -137,7 +140,7 @@ if __name__ == "__main__":
 
             # Some fine tuning of the figure: If the explosion is less then 
             # some value do not print
-            minimum_height = 12
+            minimum_height = 1
             # TODO: This should be as a function of the displayed size
             # The data height can change allot depending on the raw data
             if sum >= minimum_height:

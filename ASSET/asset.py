@@ -1124,12 +1124,12 @@ def _jsf_uniform_orderstat_3d(u, alpha, n):
     lists = [_xrange(j, n + 1) for j in _xrange(d, 0, -1)]
 
     # Compute the log of the integral's coefficient
-    logK = np.sum(np.log(np.arange(1, n + 1))) - n * np.log(1 - alpha)
+    logK = np.sum(np.log(np.arange(1, n + 1))) - n * np.log(1 - alpha).astype(np.float32)
 
     # Add to the 3D matrix u a bottom layer identically equal to alpha and a
     # top layer identically equal to 1. Then compute the difference dU along
     # the first dimension.
-    u_extended = np.ones((d + 2, dim_A, dim_B))
+    u_extended = np.ones((d + 2, dim_A, dim_B)).astype(np.float32)
     u_extended[0] = u_extended[0] * alpha
     for layer_idx, uu in enumerate(u):
         u_extended[layer_idx + 1] = u[layer_idx]
@@ -1145,11 +1145,14 @@ def _jsf_uniform_orderstat_3d(u, alpha, n):
     del u_extended
 
     # Create the dI matrix outside of the loop
-    dI = np.empty((6, dim_A, dim_B))
+    dI = np.empty((6, dim_A, dim_B)).astype(np.float32)   # TODO: Use int??
+    
+    #Step 5a, scratch pad outside of loop
+    sum_DU2_scratch = np.empty((dim_A, dim_B)).astype(np.float32)
 
     # Compute the probabilities at each (a, b), a=0,...,A-1, b=0,...,B-1
     # by matrix algebra, working along the third dimension (axis 0)
-    Ptot = np.zeros((dim_A, dim_B))  # initialize all A x B probabilities to 0
+    Ptot = np.zeros((dim_A, dim_B)).astype(np.float32)  # initialize all A x B probabilities to 0
     iter_id = 0
     MultiTimer( "  joint_probability_matrix  _jsf_uniform_orderstat_3d init")
     for matrix_entries in itertools.product(*lists):
@@ -1221,21 +1224,33 @@ def _jsf_uniform_orderstat_3d(u, alpha, n):
         dU2log = dU_scratch
         MultiTimer( "    joint_probability_matrix  _jsf_uniform_orderstat_3d log_DU2")
         ###################################
-           
-        prod_DU2 = dI * dU2log
+        # 5. Move next steps to cython
+        #prod_DU2 = dI * dU2log
         MultiTimer( "    joint_probability_matrix  _jsf_uniform_orderstat_3d prod_DU2")
 
-        sum_DU2 = prod_DU2.sum(axis=0)
-
+        #sum_DU2 = prod_DU2.sum(axis=0)
+       
+        cython_lib.accelerated.multiply_sum_arrays(sum_DU2_scratch, dI,
+                                                   dU2log)    
+        # sum_DU2 = sum_DU2_scratch
+        # Now check if they are equal!!
+        #if not (sum_DU2_scratch==sum_DU2).all():
+        #    raise Exception("Calculations not equal")       
         MultiTimer( "    joint_probability_matrix  _jsf_uniform_orderstat_3d sum_DU2")
-        logP = sum_DU2 - log_di_factorial
+        
+        ##################################
+        logP = sum_DU2_scratch - log_di_factorial
+
         MultiTimer( "    joint_probability_matrix  _jsf_uniform_orderstat_3d log")
+            
+        
             
         ##################################
         #  1 & 2. b easy to do also (not the biggest time consumer)
         add_logs = logP + logK
         #Ptot += np.exp(add_logs)
         add_logs_as_float32 = add_logs.astype(np.float32)
+        #MultiTimer( "    joint_probability_matrix  _jsf_uniform_orderstat_3d log_sum")
         Ptot += cython_lib.accelerated.exp_approx_array(add_logs_as_float32)           
         MultiTimer( "    joint_probability_matrix  _jsf_uniform_orderstat_3d exp")
         ###################################

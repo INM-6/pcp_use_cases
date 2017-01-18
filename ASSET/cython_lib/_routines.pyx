@@ -127,3 +127,38 @@ def exp_approx_array(np.ndarray[float, ndim=2] input):
                     input.shape[0] * input.shape[1])
 
     return input
+
+############
+cdef extern from "_routines.hpp":
+    void multiplysum_arrays(float* output,
+                             float* input1,
+                             float* input2,							 
+                             int entries,
+                             int sum_step)
+
+
+@cython.boundscheck(False)
+def multiply_sum_arrays(np.ndarray[float, ndim=2] output,
+                        np.ndarray[float, ndim=3] input1,
+                        np.ndarray[float, ndim=3] input2,
+                        ):  
+    """
+    return square of input
+
+    :param input a double
+    :return: square of input
+    """
+    input1 = np.ascontiguousarray(input1)
+    input2 = np.ascontiguousarray(input2)
+    output = np.ascontiguousarray(output)
+    #add_step = input1.shape[1] * input1.shape[2]
+
+    multiplysum_arrays(&output[0,0],
+                       &input1[0,0,0], 
+                       &input2[0,0,0], 
+                       input1.shape[0] * input1.shape[1] * input1.shape[2],
+                       input1.shape[1] * input1.shape[2])
+
+    return output
+
+##############
