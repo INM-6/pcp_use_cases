@@ -85,39 +85,57 @@ if __name__ == "__main__":
         bar_totals.append(bar_total_single_bar)
 
 
+    
 
-    emphasis = [[[14,14],[14,14]],    [[14,14],[14,14]],   [[None, None],[None, None]]]
+    ########################
+    # Find the index of 
+    emphasis = [[[[14,14],[14,14]],],    
+                [[[14,14],[14,14],]], 
+                [None]]
 
+    ##########################################################################
     # The total runtime as the bar labels
     bar_labels = [str(int(round(entry))) for entry in bar_totals]
-    explosion_labels = []
+
+
+
+    ######################################################################
     # 'calculate' the explosion labels from the data and the emphasis
-    for idx, entry in enumerate(emphasis):
-        # loop over pairs in the explode/emphasis ranges
-        explode_label_pair = [None, None]
+    # First loop is over the bar chart pairs
+    for idx, entry_list in enumerate(emphasis):
 
-        first_range = entry[0]
-        second_range = entry[1]
+        # THis loop is over the possible multiple emphasis pairs
+        for entry in entry_list:
+            # Skip if the data is not correct
+            if entry is None or entry[0] is None:
+                continue
 
-        # skip none values
-        if first_range[0] is None or first_range[1] is None:
-            continue
+            # FIrst idx should be from data
+            first_range = entry[0]
+            second_range = entry[1]
 
-        # Calculate  the sum of the emphasis left
-        sum = 0
-        for range_idx in range(first_range[0], first_range[1]+1):
-            sum += data[idx][range_idx][0]
+            # skip none values
+            if first_range[0] is None or first_range[1] is None:
+                continue
 
-        explode_label_pair[0] = str(int(round(sum)))
+            # Calculate  the sum of the emphasis left, we need +1 for correct 
+            # range
+            sum = 0
+            for range_idx in range(first_range[0], first_range[1]+1):
+                sum += data[idx][range_idx][0]
 
-        # Calculate  the sum of the emphasis right
-        sum = 0
-        for range_idx in range(second_range[0], second_range[1]+1):
-            sum += data[idx+1][range_idx][0]
+            # Append the label
+            entry[0].append(str(int(round(sum))))
 
-        explode_label_pair[1] = str(int(round(sum)))
 
-        explosion_labels.append(explode_label_pair)
+            # Calculate  the sum of the emphasis right
+            sum = 0
+            for range_idx in range(second_range[0], second_range[1]+1):
+                sum += data[idx+1][range_idx][0]
+
+            # Append the label
+            entry[1].append(str(int(round(sum))))
+
 
     import cascadedexplodingbarcharts as casbar
     import matplotlib.pyplot as plt
@@ -136,8 +154,8 @@ if __name__ == "__main__":
 
     ############################
     # Main call to functionality
-    casbar.cascaded_exploding_barcharts(ax, data, emphasis, bar_labels, explosion_labels,
-                                 "percentage")
+    casbar.cascaded_exploding_barcharts(ax, data, emphasis, bar_labels, 
+                                 "normalized")
 
     ##############################
     # Some additional makeup of the figure
