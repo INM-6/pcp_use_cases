@@ -89,8 +89,8 @@ if __name__ == "__main__":
 
     ########################
     # Find the index of 
-    emphasis = [[[[14,14],[14,14]],],    
-                [[[14,14],[14,14],]], 
+    emphasis = [[[[14,14],[14,14]],[[18,18],[18,18]]],    
+                [[[14,14],[14,14]],[[18,18],[18,18]]], 
                 [None]]
 
     ##########################################################################
@@ -106,6 +106,7 @@ if __name__ == "__main__":
 
         # THis loop is over the possible multiple emphasis pairs
         for entry in entry_list:
+            
             # Skip if the data is not correct
             if entry is None or entry[0] is None:
                 continue
@@ -121,11 +122,18 @@ if __name__ == "__main__":
             # Calculate  the sum of the emphasis left, we need +1 for correct 
             # range
             sum = 0
+
             for range_idx in range(first_range[0], first_range[1]+1):
                 sum += data[idx][range_idx][0]
 
-            # Append the label
-            entry[0].append(str(int(round(sum))))
+            # Some fine tuning of the figure: If the explosion is less then 
+            # some value do not print
+            minimum_width = 15
+            if sum >= minimum_width:
+                # Append the label
+                entry[0].append(str(int(round(sum))))
+            else:
+                entry[0].append(None)
 
 
             # Calculate  the sum of the emphasis right
@@ -133,20 +141,31 @@ if __name__ == "__main__":
             for range_idx in range(second_range[0], second_range[1]+1):
                 sum += data[idx+1][range_idx][0]
 
-            # Append the label
-            entry[1].append(str(int(round(sum))))
+            if sum >= minimum_width:
+                # Append the label
+                entry[1].append(str(int(round(sum))))
+            else:
+                entry[1].append(None)
 
-
+    ###################################################################
+    # Plotting the chart
     import cascadedexplodingbarcharts as casbar
     import matplotlib.pyplot as plt
 
     exp_barch_tp_set = casbar.exp_barch_tp_set
+
     ##############
     # Type setting
     # all type setting by adapting global_type_setting
     exp_barch_tp_set["exploding_line"] = {'color':'k', "ls":'--', "lw":1.0}
     # important settings: controll from what size bar labels are not drawn
-    exp_barch_tp_set["box_size_text_cutoff"]=0.6
+    exp_barch_tp_set["box_size_text_cutoff"]=0.5
+    #offset left label
+    exp_barch_tp_set["explode_label_offset_left"]= 0.61
+    #offset right side label
+    exp_barch_tp_set["explode_label_offset_right"]= 0.90
+
+    
 
     ##############################
     # Create a figure get the axis
@@ -155,7 +174,7 @@ if __name__ == "__main__":
     ############################
     # Main call to functionality
     casbar.cascaded_exploding_barcharts(ax, data, emphasis, bar_labels, 
-                                 "normalized")
+                                 "percentage")
 
     ##############################
     # Some additional makeup of the figure

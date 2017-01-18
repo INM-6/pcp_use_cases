@@ -1161,16 +1161,18 @@ def _jsf_uniform_orderstat_3d(u, alpha, n):
             log_di_factorial = np.sum([np.log(np.arange(1, di_k + 1)).sum()
                                        for di_k in di if di_k >= 1])
             MultiTimer( "    joint_probability_matrix  _jsf_uniform_orderstat_3d sum")
+            
+            
+            ##################################
             # Compute for each i,j the contribution to the total
             # probability given by this step, and add it to the total prob.
             #dU2log = np.log(dU2)
-            
-            ##################################
+            # TODO: Might be moved outside of the loop
             dU2_as_float32 = dU2.astype(np.float32)
             dU2log = cython_lib.accelerated.log_approx_array(dU2_as_float32)
-            ###################################
-
             MultiTimer( "    joint_probability_matrix  _jsf_uniform_orderstat_3d log_DU2")
+            ###################################
+           
             prod_DU2 = dI * dU2log
             MultiTimer( "    joint_probability_matrix  _jsf_uniform_orderstat_3d prod_DU2")
             sum_DU2 = prod_DU2.sum(axis=0)
@@ -1183,10 +1185,11 @@ def _jsf_uniform_orderstat_3d(u, alpha, n):
             #Ptot += np.exp(add_logs)
             add_logs_as_float32 = add_logs.astype(np.float32)
             Ptot += cython_lib.accelerated.exp_approx_array(add_logs_as_float32)           
+            MultiTimer( "    joint_probability_matrix  _jsf_uniform_orderstat_3d exp")
             ###################################
 
 
-            MultiTimer( "    joint_probability_matrix  _jsf_uniform_orderstat_3d exp")
+            
 
         MultiTimer( "    joint_probability_matrix  _jsf_uniform_orderstat_3d step")
     return Ptot
