@@ -186,12 +186,17 @@ exp_barch_tp_set = {
     "exploding_line":{'color':'k', "ls":'--', "lw":1.0, "zorder":4},
     # Label between the explosion lines
     "explode_label": True,
-    "explode_label_text":{"ha":'center',  "va":'center', "fontsize":13,
+    "explode_label_text":{"ha":'left',  "va":'center', "fontsize":13,
                           "style":'italic', "zorder":4},
+
     #offset left label
     "explode_label_offset_left": 0.52,
+    # Correction in vertical position (used when the wedges are skewed up or down
+    "explode_label_v_offset_left": 0.15, 
+
     #offset right side label
     "explode_label_offset_right": 0.83,
+    "explode_label_v_offset_right": 0.6,
 
     "explode_bg":True,
     "explode_bg_xs_offset":0.009,
@@ -394,18 +399,42 @@ def display_explosion(ax, data, emphasis, representation, chart_id=0):
     ax.plot(xs_top_line, ys_top_line, 
             **exp_barch_tp_set["exploding_line"])
 
+
+
     # Add text at the centre to show the size of the 'sum'
         # Add the label of the bar (if there)
     if exp_barch_tp_set["explode_label"]:
+        # The vertical location of the label might be a little offset of the 
+        # wedge has a large vertical shift to the next bar
+        # Use the explode_label_offset combined with the ys_top_line and bottom
+        # line to create an interpolation location which is better
+        
+        mid_left = (ys_top_line[0] + ys_bottom_line[0]) / 2
+        mid_right = (ys_top_line[1] + ys_bottom_line[1]) / 2
+        midline_dx = mid_right - mid_left
+        # DO some magix to correct the vectical allignment of the text
+        # due to possible offset in the explode wedge
+
+        left_cor = exp_barch_tp_set["explode_label_v_offset_left"]
+        left_offset = exp_barch_tp_set["explode_label_offset_left"] 
+        fraction_away_from_left = left_offset / .50
+        correction_left = left_cor * fraction_away_from_left * midline_dx
         if not emphasis[0][2] is None:
             ax.text(chart_id + exp_barch_tp_set["explode_label_offset_left"], 
-                (ys_top_line[0] + ys_bottom_line[0]) / 2, 
+                mid_left + correction_left, 
                 emphasis[0][2],
                   **exp_barch_tp_set["explode_label_text"])
 
+
+        # DO some magix to correct the vectical allignment of the text
+        # due to possible offset in the explode wedge
+        right_cor = exp_barch_tp_set["explode_label_v_offset_right"]
+        right_offset = exp_barch_tp_set["explode_label_offset_right"] 
+        fraction_away_from_right = (1 - right_offset ) / .50
+        correction_right = - right_cor * fraction_away_from_right * midline_dx
         if not emphasis[1][2] is None:
             ax.text(chart_id + exp_barch_tp_set["explode_label_offset_right"], 
-                (ys_top_line[1] + ys_bottom_line[1]) / 2 , 
+                mid_right  + correction_right, 
                 emphasis[1][2],
                   **exp_barch_tp_set["explode_label_text"])
     

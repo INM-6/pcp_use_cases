@@ -1076,6 +1076,17 @@ def probability_matrix_analytical(
 
     return pmat, xx, yy
 
+def aligned(a, alignment=16):
+    if (a.ctypes.data % alignment) == 0:
+        return a
+
+    extra = alignment / a.itemsize
+    buf = np.empty(a.size + extra, dtype=a.dtype)
+    ofs = (-buf.ctypes.data % alignment) / a.itemsize
+    aa = buf[ofs:ofs+a.size].reshape(a.shape)
+    np.copyto(aa, a)
+    assert (aa.ctypes.data % alignment) == 0
+    return aa
 
 def _jsf_uniform_orderstat_3d(u, alpha, n):
     '''
@@ -1117,6 +1128,9 @@ def _jsf_uniform_orderstat_3d(u, alpha, n):
         Note: the joint probability matrix computed for the ASSET analysis
         is 1-S.
     '''
+    #http://stackoverflow.com/questions/9895787/memory-alignment-for-fast-fft-in-python-using-shared-arrrays
+    #memory-alignment
+
     d, dim_A, dim_B = u.shape
 
     # Define ranges [1,...,n], [2,...,n], ..., [d,...,n] for the mute variables
@@ -1129,7 +1143,7 @@ def _jsf_uniform_orderstat_3d(u, alpha, n):
     # Add to the 3D matrix u a bottom layer identically equal to alpha and a
     # top layer identically equal to 1. Then compute the difference dU along
     # the first dimension.
-    u_extended = np.ones((d + 2, dim_A, dim_B)).astype(np.float32)
+    u_extended = aligned(np.ones((d + 2, dim_A, dim_B)).astype(np.float32), alignment=64)
     u_extended[0] = u_extended[0] * alpha
     for layer_idx, uu in enumerate(u):
         u_extended[layer_idx + 1] = u[layer_idx]
@@ -1137,7 +1151,7 @@ def _jsf_uniform_orderstat_3d(u, alpha, n):
     ################################
     # 4a. Create a scratch array to be used later on and
     # cast to float32
-    dU = np.diff(u_extended, axis=0).astype(np.float32)  # shape (d+1, A, B)
+    dU = aligned(np.diff(u_extended, axis=0).astype(np.float32) , alignment=64) # shape (d+1, A, B)
     # Precalculate all the logs
     dU = cython_lib.accelerated.log_approx_array(dU)
 
@@ -1145,14 +1159,14 @@ def _jsf_uniform_orderstat_3d(u, alpha, n):
     del u_extended
 
     # Create the dI matrix outside of the loop
-    dI = np.empty((6, dim_A, dim_B)).astype(np.float32)   # TODO: Use int??
+    dI = aligned(np.empty((6, dim_A, dim_B)).astype(np.float32), alignment=64)   # TODO: Use int??
     
     #Step 5a, scratch pad outside of loop
-    sum_DU2_scratch = np.empty((dim_A, dim_B)).astype(np.float32)
+    sum_DU2_scratch = aligned(np.empty((dim_A, dim_B)).astype(np.float32), alignment=64)
 
     # Compute the probabilities at each (a, b), a=0,...,A-1, b=0,...,B-1
     # by matrix algebra, working along the third dimension (axis 0)
-    Ptot = np.zeros((dim_A, dim_B)).astype(np.float32)  # initialize all A x B probabilities to 0
+    Ptot = aligned(np.zeros((dim_A, dim_B)).astype(np.float32), alignment=64)  # initialize all A x B probabilities to 0
     iter_id = 0
     MultiTimer( "  joint_probability_matrix  _jsf_uniform_orderstat_3d init")
     for matrix_entries in itertools.product(*lists):
@@ -1249,7 +1263,7 @@ def _jsf_uniform_orderstat_3d(u, alpha, n):
         #  1 & 2. b easy to do also (not the biggest time consumer)
         add_logs = logP + logK
         #Ptot += np.exp(add_logs)
-        add_logs_as_float32 = add_logs.astype(np.float32)
+        add_logs_as_float32 = aligned(add_logs.astype(np.float32), alignment=64)
         #MultiTimer( "    joint_probability_matrix  _jsf_uniform_orderstat_3d log_sum")
         Ptot += cython_lib.accelerated.exp_approx_array(add_logs_as_float32)           
         MultiTimer( "    joint_probability_matrix  _jsf_uniform_orderstat_3d exp")

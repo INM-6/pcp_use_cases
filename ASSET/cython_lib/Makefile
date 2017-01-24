@@ -1,7 +1,8 @@
 #
 # Makefile to only rebuild the extension if *.pyx changes
 #
-CXX = g++
+#CXX = g++
+CXX = icpc
 CYTHON = cython
 PYTHON = python
 
@@ -23,7 +24,8 @@ endif
 
 ifeq ($(CXX),icpc)
     CXXFLAGS = -m64
-    OPTFLAGS = -O3 -fp-model strict -fomit-frame-pointer -xhost
+    OPTFLAGS = -xCOMMON-AVX512 -xmic-avx512 -qopt-report=5 -O3
+	CPPFLAGS += -I/gpfs/homeb/pcp0/pcp0016/.local/lib/python2.7/site-packages/numpy/core/include/
     OPENMPFLAGS = -openmp
 endif
 

@@ -47,6 +47,7 @@ float exp_cst2 = 0.f;
 // Relative error bounded by 1e-5 for normalized outputs
 //   Returns invalid outputs for nan inputs
 //   Continuous error
+#pragma omp declare simd //processor(mic-avx512)
 inline float expapprox(float val) {
 
   union { int i; float f; } xu, xu2;
@@ -77,10 +78,34 @@ inline float expapprox(float val) {
 
 inline void expapprox_array(float* input, int entries)
 {
+      union { int i; float f; } xu, xu2;
+      float val2, val3, val4, b;
+      int val4i;
+    #pragma omp simd ivdep private(xu, xu2, val2, val3, val4, b, val4i)
     for (int x = 0; x < entries; ++x)
     {
-        input[x] = expapprox(input[x]);
+
+      val2 = 12102203.1615614f*input[x]+1065353216.f;
+      val3 = val2 < exp_cst1 ? val2 : exp_cst1;
+      val4 = val3 > exp_cst2 ? val3 : exp_cst2;
+      val4i = (int) val4;
+      xu.i = val4i & 0x7F800000;
+      xu2.i = (val4i & 0x7FFFFF) | 0x3F800000;
+      b = xu2.f;
+
+      input[x] = xu.f * (0.510397365625862338668154f + b *
+                (0.310670891004095530771135f + b *
+                 (0.168143436463395944830000f + b *
+                  (-2.88093587581985443087955e-3f + b *
+                   1.3671023382430374383648148e-2f))));
     }
+      // Generated in Sollya with:
+      //   > f=remez(1-x*exp(-(x-1)*log(2)),
+      //             [|1,(x-1)*(x-2), (x-1)*(x-2)*x, (x-1)*(x-2)*x*x|],
+      //             [1,2], exp(-(x-1)*log(2)));
+      //   > plot(exp((x-1)*log(2))/(f+x)-1, [1,2]);
+      //   > f+x;
+
 }
 
 /* Absolute error bounded by 1e-6 for normalized inputs
@@ -88,6 +113,7 @@ inline void expapprox_array(float* input, int entries)
    Returns -inf for nan and <= 0 inputs.
    Continuous error. */
 //
+#pragma omp declare simd
 inline float logapprox(float val) {
 
   union { float f; int i; } valu;
@@ -121,6 +147,7 @@ inline float logapprox(float val) {
 
 inline void logapprox_array(float* input, int entries)
 {
+    #pragma vector aligned
     for (int x = 0; x < entries; ++x)
     {
         input[x] = logapprox(input[x]);
@@ -129,6 +156,7 @@ inline void logapprox_array(float* input, int entries)
 
 inline void logapprox_multiply_array(float* input1, float* input2,  int entries)
 {
+    #pragma vector aligned
     for (int x = 0; x < entries; ++x)
     {
         input1[x] = logapprox(input1[x]) * input2[x];
@@ -138,6 +166,7 @@ inline void logapprox_multiply_array(float* input1, float* input2,  int entries)
 
 inline void multiply_two_array(float* input1, float* input2,  int entries)
 {
+    #pragma vector aligned
     for (int x = 0; x < entries; ++x)
     {
         // Might be faster of not writing to the same array?
@@ -183,6 +212,7 @@ inline void multiplysum_arrays(float* output,
                          int sum_step)
 {
     // First do the multiply
+    #pragma vector aligned
     for (int x = 0; x < entries; ++x)
     {
         input1[x] *= input2[x];
@@ -195,6 +225,7 @@ inline void multiplysum_arrays(float* output,
     const int five_sumstep = 5 * sum_step;
 
     // Do the sum over the first axis
+    #pragma vector aligned
     for (int x =0; x < sum_step; ++x)
     {
         output[x] = input1[x] +
