@@ -25,14 +25,17 @@ def process_single_file(file_base):
     for line in fp_in.readlines():
         # Make use of feature in the data to know when to start a new 'group'
         if line.strip() == "{}":
+            # Always continue to nex line
+            continue
+
+        if line.strip()[0:6] == "#Total":
             if current_run == None:
                 current_run = []
             # We have data to store
             else:
+                #print current_run
                 collected_data.append(current_run)
                 current_run = []
-            # Always continue to nex line
-            continue
 
         # Strip comment
         if line.strip()[0] == "#":
@@ -75,15 +78,13 @@ if __name__ == "__main__":
     #################################################
     # Retrieve data from following files
     files_for_parse = [
-        "output_original",
-        "output_log_exp_cython",
-        "output_log_exp_approx",
-        "3c_sum_optimized",
-        "4b_logprecompute",
-        "5b_float32",
-        "knl_g++",
-        "knl_icpc",
-        "knl_icpc_nopragma"
+       ["output_original",       "Original"                ],
+       ["output_log_exp_cython", "Cython"               ],
+       ["output_log_exp_approx", "Approximate"               ],
+       ["3c_sum_optimized",      "Combine\noperations"   ],
+       ["4b_logprecompute",      "Precompute"                   ],
+       ["5b_float32",            "Consistent\nprecision"  ],
+       ["knl_mpi_gpp",           "MPI on KNL",  "prob_method" ]
         ]
 
     ##########################################
@@ -94,16 +95,16 @@ if __name__ == "__main__":
     # raw_data_name, display_name, color 
     # First set is all in the asset_min
     ("import"   ,"init 1",""),
-    ("init"                     ,"init 2","#ffffff"),
-    ("data"                     ,"init 3","#ffffff"),
-    ("intersection_matrix"      ,"init 4","#ffffff"),
+    ("init"                     ,"init 2","#6DECC5"),
+    ("data"                     ,"init 3","#749faf"),
+    ("intersection_matrix"      ,"init 4","#687592"),
 
     # Some calculation is significant in the optimized version
-    ("prob_method"              ,"Pmatrix","#8FA4C9"),
+    ("prob_method"              ,"prep","#8FA4C9"),
 
     # in between function call, totally not significant
     ("init"                     ,"neighbours 1","#6DECC5"),
-    ("flatten"                  ,"neighbours 2","#6DECC5"),
+    ("flatten"                  ,"adjoin","#7788AA"),
     ("sort"                     ,"neighbours 3","#6DECC5"),
     ("step"                     ,"neighbours 4","#6DECC5"),
     ("_pmat_neighbors"          ,"neighbours 5","#6DECC5"),
@@ -114,10 +115,12 @@ if __name__ == "__main__":
     ("init"                     ,"init","#93EDAA"),
     ("diff"                     ,"diff","#65A375"),
     ("reshape"                  ,"jsf","#2B8041"),
-    ("sum"                      ,"factorial","#2B8061"),
+    ("sum"                      ,"factor","#2B8061"),
 
     # Red color
     ("log_DU2"                  ,"log","#EB8571"),
+    ("log_DU2_ones"             ,"ones","#E08571"),
+    ("log_DU2_copy"             ,"copy","#f78571"),
 
     # Yelow
     ("prod_DU2"                 ,"prod","#B1B55B"),
@@ -128,8 +131,8 @@ if __name__ == "__main__":
     ("exp"                      ,"exp","#EBCC71"),
 
     # Blue color
-    ("step"                     ,"loop tail","#4F75E8"),
-    ("_jsf_uniform_orderstat_3d","finish stats","#4F75E8"),
+    ("step"                     ,"tail","#4F75E8"),
+    ("_jsf_uniform_orderstat_3d","final","#308bb5"),
 
     # Finalize, printing output, takes not time
     ("joint_probability_matrix" ,"exit","#ffffff"),
@@ -147,7 +150,8 @@ if __name__ == "__main__":
     bar_totals = []
     for file_base in files_for_parse:
         # Get data from file
-        raw_data_for_single_bar = process_single_file(file_base)
+        raw_data_for_single_bar = process_single_file(file_base[0])
+
 
         data_for_single_bar = []
         # Keep a running tab of the total runtime
@@ -155,18 +159,34 @@ if __name__ == "__main__":
 
         # We need to keep count of name occurrences, they might not be unique 
         # after cleanup in parse stage
-        name_seen = [False] * len(raw_data_for_single_bar)
+        name_seen = [False] * len(typeset_data)
 
 
         for entry in raw_data_for_single_bar:
+          
+            # HACKY THE HACK!!! 
+            # I want to not print a certain entry
+            skip_name = None
+            
+            if len(file_base) == 3:
+                skip_name = file_base[2]
+
             bar_total_single_bar += entry[1]
+            type_set = False
 
             # Loop tru the typeset_data looking for first occurance
             for idx, entry_typeset in enumerate(typeset_data):
                 if entry[0] == entry_typeset[0] and not name_seen[idx]:
-                    
+ 
                     # We have a match
-                    name_seen[idx] = True   
+                    name_seen[idx] = True  
+                    type_set = True 
+
+                    # Hack skip display and remove total
+                    if skip_name == entry[0]:
+                        bar_total_single_bar -= entry[1]
+                        break
+
                     if rename:
                         name = entry_typeset[1]
                     else:
@@ -178,13 +198,18 @@ if __name__ == "__main__":
 
                     break
 
+            if not type_set:
+                data_for_single_bar.append([entry[1], entry[0],
+                        "#ffffff"])
+
+
         data.append(data_for_single_bar)
         bar_totals.append(bar_total_single_bar)
 
 
     ##########################################################################
     # The total runtime as the bar labels
-    bar_labels = [str(int(round(entry)))+"s" for entry in bar_totals]
+    bar_labels = [str(int(round(entry))) for entry in bar_totals]
 
 
     ########################
@@ -193,8 +218,8 @@ if __name__ == "__main__":
     emphasis = [[[[14,14],[14,14]],[[18,18],[18,18]]],    
                 [[[14,14],[14,14]],[[18,18],[18,18]]], 
                 [[[11,14],[11,14]],[[19,19],[19,19]]],
-                [[[14,14],[14,14]]],
-                [[[12,12],[12,12]],[[14,16],[14,16]], [[17,18],[17,18]]],
+                [[[14,14],[14,15]]],
+                [[[12,12],[12,12]],[[17,18],[17,18]]],
                 [None],
                 [None],
                 [None],
@@ -265,18 +290,25 @@ if __name__ == "__main__":
     # all type setting by adapting global_type_setting
     exp_barch_tp_set["exploding_line"] = {'color':'k', "ls":'--', "lw":1.0}
     # important settings: controll from what size bar labels are not drawn
-    exp_barch_tp_set["box_size_text_cutoff"]=0.5
+    exp_barch_tp_set["box_size_text_cutoff"]=0.3
     #offset left label
     exp_barch_tp_set["explode_label_offset_left"]= 0.52
     exp_barch_tp_set["explode_label_v_offset_left"]= 0.1
     #offset right side label
-    exp_barch_tp_set["explode_label_offset_right"]= 0.90
+    exp_barch_tp_set["explode_label_offset_right"]= 0.80
 
-    
+    exp_barch_tp_set["explode_label_text"]={"ha":'left',  "va":'center', "fontsize":15,
+                          "style":'italic', "zorder":4}
 
+
+    exp_barch_tp_set["bar_label_text"]={"ha":'left',  "va":'bottom', "fontsize":20, "zorder":4}
+
+    exp_barch_tp_set["box_label_text"]={ "ha":'center', "fontsize":18, "va":'center', "zorder":4}
     ##############################
     # Create a figure get the axis
-    f, ax = plt.subplots()   
+    
+
+    f, ax = plt.subplots(figsize=(20, 10))   
 
     ############################
     # Main call to functionality
@@ -285,18 +317,28 @@ if __name__ == "__main__":
 
     ##############################
     # Some additional makeup of the figure
-    plt.title("Total runtime and duration of steps \n for specific optimization stages", fontsize = 17)
+    #plt.title("Total runtime and duration of steps \n for specific optimization stages", fontsize = 17)
 
-    xticks = [x + 0.2 for x in range(len(files_for_parse))]
+    xticks = [x + 0.25 for x in range(len(files_for_parse))]
     ax.set_xticks(xticks)
 
     # Use the file names as xbar labels
-    ax.set_xticklabels(files_for_parse)
+    ax.set_xticklabels([x[1] for x in files_for_parse])
+    ax.tick_params(axis='both', which='major', 
+                    bottom='off',      # ticks along the bottom edge are off
+                      top='off',         # ticks along the top edge are off
+                   
+                   
+                   labelsize=20)
 
     ax.set_yticks([])
     ax.set_yticklabels([])
 
-    plt.xlim( -.2, plt.xlim()[1] + .2 )
-    plt.ylim(- plt.ylim()[1] / 15,  plt.ylim()[1] + plt.ylim()[1] / 15)
+
+
+    plt.xlim( -.2, 6.7 )
+
+    plt.ylim(-5,  110)
     plt.show()
+    f.savefig('myfig.png', dpi=300)
 

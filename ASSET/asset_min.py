@@ -8,6 +8,38 @@ import elephant.statistics as estats
 import asset as asset
 import elephant.spike_train_generation as stg
 
+# #######################################
+# TODO: With a blunt knive make the code MPI
+from mpi4py import MPI
+comm = MPI.COMM_WORLD
+size = comm.Get_size()
+rank = comm.Get_rank()
+#############################################
+
+import time
+
+def barrier(comm, tag=0, sleep=0.01):
+    """
+    MPI barrier fonction
+    that solve the problem that Idle process occupies 100% CPU.
+    See: https://goo.gl/NofOO9
+    see: https://groups.google.com/forum/#!topic/mpi4py/nArVuMXyyZI
+    """
+    size = comm.Get_size()
+    if size == 1:
+        return
+    rank = comm.Get_rank()
+    mask = 1
+    while mask < size:
+        dst = (rank + mask) % size
+        src = (rank - mask + size) % size
+        req = comm.isend(None, dst, tag)
+        while not comm.Iprobe(src, tag):
+            time.sleep(sleep)
+        comm.recv(None, src, tag)
+        req.Wait()
+        mask <<= 1
+
 
 MultiTimer("import")
 # ===========================================================================
@@ -56,30 +88,47 @@ for i in range(N):
     sts.append(stg.homogeneous_poisson_process(rate, t_stop=T)) 
 
 MultiTimer("generate data")
-# =======================================================================
-# ASSET Method
-# =======================================================================
-imat, xx, yy = asset.intersection_matrix(sts, binsize=binsize, dt=T)
 
-MultiTimer("intersection_matrix")
 # Compute the probability matrix, either analytically or via bootstrapping
-if prob_method == 'a':
-    # Estimate rates
-    fir_rates = list(np.zeros(shape=len(sts)))
-    for st_id, st_trial in enumerate(sts):
-        fir_rates[st_id] = estats.instantaneous_rate(st_trial,
-                                                 sampling_period=sampl_period)
-        fir_rates[st_id] = neo.AnalogSignal(
-            fir_rates[st_id], t_start=t_pre, t_stop=t_post,
-            sampling_period=sampl_period)
-    # Compute the probability matrix analytically
-    pmat, x_edges, y_edges = asset.probability_matrix_analytical(
-        sts, binsize, dt=T, fir_rates=fir_rates)
-elif prob_method == 'b':
-    # Compute the probability matrix via bootstrapping (Montecarlo)
-    pmat, x_edges, y_edges = asset.probability_matrix_montecarlo(
-        sts, binsize, dt=T, j = dither_T, n_surr=n_surr)
+pmat = np.zeros((200,200))
+
+MultiTimer("before barrier")
+barrier(comm)
+
+if rank == 0:
+
+    print rank
+    MultiTimer("rank zero work")
+    # =======================================================================
+    # ASSET Method
+    # =======================================================================
+    imat, xx, yy = asset.intersection_matrix(sts, binsize=binsize, dt=T)
+
+    MultiTimer("intersection_matrix")
+
+    if prob_method == 'a':
+        # Estimate rates
+        fir_rates = list(np.zeros(shape=len(sts)))
+        for st_id, st_trial in enumerate(sts):
+            fir_rates[st_id] = estats.instantaneous_rate(st_trial,
+                                                     sampling_period=sampl_period)
+            fir_rates[st_id] = neo.AnalogSignal(
+                fir_rates[st_id], t_start=t_pre, t_stop=t_post,
+                sampling_period=sampl_period)
+        # Compute the probability matrix analytically
+        pmat, x_edges, y_edges = asset.probability_matrix_analytical(
+            sts, binsize, dt=T, fir_rates=fir_rates)
+    elif prob_method == 'b':
+        # Compute the probability matrix via bootstrapping (Montecarlo)
+        pmat, x_edges, y_edges = asset.probability_matrix_montecarlo(
+            sts, binsize, dt=T, j = dither_T, n_surr=n_surr)
+
+
 MultiTimer("prob_method")
+barrier(comm)
+comm.Bcast(pmat)
+MultiTimer("Bcast")
+
 # Compute the joint probability matrix
 jmat = asset.joint_probability_matrix(
     pmat, filter_shape=(fl, fw), alpha=0, pvmin=1e-5)
@@ -95,15 +144,28 @@ MultiTimer("mask_matrices")
 cmat = asset.cluster_matrix_entries(mmat, eps, minsize, stretch)
 MultiTimer("cluster_matrix_entries")
 
-# Extract the SSEs from the cluster matrix
-sse_found = asset.extract_sse(sts, xx, yy, cmat)
 
-MultiTimer("extract_sse")
-print sse_found
 
-file = open("sse_found", "w")
+if  rank is 0:
+    # Extract the SSEs from the cluster matrix
+    sse_found = asset.extract_sse(sts, xx, yy, cmat)
 
-file.write(str(sse_found))
+    MultiTimer("extract_sse")
 
-file.close()
-MultiTimer.print_timings(header=True, seperator=",", prefix="")
+    
+    file = open("sse_found", "w")
+
+    file.write(str(sse_found))
+
+    file.close()
+
+    file_runtime = open("runtime.csv", "a")
+    file_runtime.write("{0},{1}\n".format(size, MultiTimer.runtime()))
+    file_runtime.close()
+
+if rank is 0:
+    MultiTimer.print_timings(header=True, seperator=",", prefix="")
+
+    
+    
+

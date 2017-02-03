@@ -185,7 +185,19 @@ class MultiTimer:
                count[key], 
                timers[key],seperator))
 
-        
+    @classmethod
+    def runtime(cls):
+        """
+        Print a textual overview of the timing results
+        """
+        timers = cls.timers
+        count = cls.count
+        total = 0.0
+        # Calculate the total runtime
+        for key in cls.order:
+            total += timers[key]
+            
+        return total        
 
     @classmethod
     def to_file_like_as_csv(cls, fp, header=True):

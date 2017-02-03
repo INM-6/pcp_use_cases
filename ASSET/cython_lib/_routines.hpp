@@ -78,10 +78,18 @@ inline float expapprox(float val) {
 
 inline void expapprox_array(float* input, int entries)
 {
+   // __assume_aligned(input, 64);
       union { int i; float f; } xu, xu2;
       float val2, val3, val4, b;
       int val4i;
-    #pragma omp simd ivdep private(xu, xu2, val2, val3, val4, b, val4i)
+
+    const register float c1 = 0.510397365625862338668154f;
+    const register float c2 =    0.310670891004095530771135f ;
+    const register float c3 = 0.168143436463395944830000f;
+    const register float c4 = -2.88093587581985443087955e-3f;
+    const register float c5 = 1.3671023382430374383648148e-2f;
+
+#pragma simd private(xu, xu2, val2, val3, val4, b, val4i)
     for (int x = 0; x < entries; ++x)
     {
 
@@ -93,11 +101,11 @@ inline void expapprox_array(float* input, int entries)
       xu2.i = (val4i & 0x7FFFFF) | 0x3F800000;
       b = xu2.f;
 
-      input[x] = xu.f * (0.510397365625862338668154f + b *
-                (0.310670891004095530771135f + b *
-                 (0.168143436463395944830000f + b *
-                  (-2.88093587581985443087955e-3f + b *
-                   1.3671023382430374383648148e-2f))));
+      input[x] = xu.f * (c1 + b *
+                (c2+ b *
+                 (c3 + b *
+                  (c4 + b *
+                   c5))));
     }
       // Generated in Sollya with:
       //   > f=remez(1-x*exp(-(x-1)*log(2)),
@@ -113,7 +121,6 @@ inline void expapprox_array(float* input, int entries)
    Returns -inf for nan and <= 0 inputs.
    Continuous error. */
 //
-#pragma omp declare simd
 inline float logapprox(float val) {
 
   union { float f; int i; } valu;
@@ -156,10 +163,39 @@ inline void logapprox_array(float* input, int entries)
 
 inline void logapprox_multiply_array(float* input1, float* input2,  int entries)
 {
-    #pragma vector aligned
-    for (int x = 0; x < entries; ++x)
+   // __assume_aligned(input1, 64);
+   // __assume_aligned(input2, 64);
+
+    union { float f; int i; } valu;
+    float exp, addcst, x;
+
+    #pragma simd private( valu, exp, addcst,x)
+
+    for (int idx = 0; idx < entries; ++idx)
     {
-        input1[x] = logapprox(input1[x]) * input2[x];
+
+          valu.f = input1[idx];
+          exp = valu.i >> 23;
+          // 89.970756366f = 127 * log(2) - constant term of polynomial
+          addcst = input1[idx] > 0 ? -89.970756366f : -(float)INFINITY;
+          valu.i = (valu.i & 0x7FFFFF) | 0x3F800000;
+          x = valu.f;
+
+
+          //Generated in Sollya using :
+           // > f = remez(log(x)-(x-1)*log(2),
+           //        [|1,(x-1)*(x-2), (x-1)*(x-2)*x, (x-1)*(x-2)*x*x,
+           //           (x-1)*(x-2)*x*x*x|], [1,2], 1, 1e-8);
+           // > plot(f+(x-1)*log(2)-log(x), [1,2]);
+           //> f+(x-1)*log(2)
+
+          input1[idx] =
+            x * (3.529304993f + x * (-2.461222105f +
+              x * (1.130626167f + x * (-0.288739945f +
+                x * 3.110401639e-2f))))
+            + (addcst + 0.69314718055995f*exp) * input2[idx];
+
+
     }
 }
 

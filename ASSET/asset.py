@@ -54,6 +54,8 @@ from sklearn.cluster import dbscan as dbscan
 
 from timer import MultiTimer
 import cython_lib
+from mpi4py import MPI
+
 # =============================================================================
 # Some Utility Functions to be dealt with in some way or another
 # =============================================================================
@@ -1168,8 +1170,21 @@ def _jsf_uniform_orderstat_3d(u, alpha, n):
     # by matrix algebra, working along the third dimension (axis 0)
     Ptot = aligned(np.zeros((dim_A, dim_B)).astype(np.float32), alignment=64)  # initialize all A x B probabilities to 0
     iter_id = 0
+    log_point1 = np.log(1.)
+
+    # #######################################
+    # TODO: With a blunt knive make the code MPI
+    comm = MPI.COMM_WORLD
+    size = comm.Get_size()
+    rank = comm.Get_rank()
+    #############################################
+
     MultiTimer( "  joint_probability_matrix  _jsf_uniform_orderstat_3d init")
     for matrix_entries in itertools.product(*lists):
+        if iter_id % size != rank:
+            iter_id += 1
+            continue 
+
         iter_id += 1
         
         ####################################
@@ -1231,7 +1246,7 @@ def _jsf_uniform_orderstat_3d(u, alpha, n):
         #dU2_as_float32 = dU2.astype(np.float32)
         np.copyto(dU_scratch, dU)   # In memory copy between nparrays
         MultiTimer( "    joint_probability_matrix  _jsf_uniform_orderstat_3d log_DU2_copy ")
-        dU_scratch[dI == 0] = np.log(1.)
+        dU_scratch[dI == 0] = log_point1
         MultiTimer( "    joint_probability_matrix  _jsf_uniform_orderstat_3d log_DU2_ones")
         
         #dU2log = cython_lib.accelerated.log_approx_array(dU_scratch)
@@ -1273,7 +1288,25 @@ def _jsf_uniform_orderstat_3d(u, alpha, n):
             
 
         MultiTimer( "    joint_probability_matrix  _jsf_uniform_orderstat_3d step")
-    return Ptot
+
+    # use MPI to get the totals 
+    # the 'totals' array will hold the sum of each 'data' array
+    totals = np.zeros((dim_A, dim_B)).astype(np.float32)
+
+    # ranks end with a big pauze between. this is strange and should be
+    # fixed with a consumer thingymajig
+    #print "done: {0}".format(rank)
+
+    comm.Allreduce(
+        [Ptot, MPI.FLOAT],
+        [totals, MPI.FLOAT],
+        op = MPI.SUM
+        )
+
+
+
+
+    return totals
 
 
 def _pmat_neighbors(mat, filter_shape, nr_largest=None, diag=0):
