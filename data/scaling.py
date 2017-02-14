@@ -55,27 +55,33 @@ def add_plot(ax, stat_file):
         print cores[idx], ideal[0] / cores[idx]
         ideal.append(ideal[0] / cores[idx])
 
-    ax.plot(cores, norm_runtime, label="measured")
-    ax.plot(cores, ideal, label="ideal")
+    ax.plot(cores, norm_runtime,  "-o", label="Measured runtime ", linewidth=4, markersize=10, zorder=2)
+    ax.plot(cores, ideal, "--", label="ideal", linewidth=2, zorder=1)
     print norm_runtime
 
 # Create a figure get the axis
-f, ax = plt.subplots()   
+f, axes_pair = plt.subplots(1, 2, figsize=(20, 9))
 
-for idx in range(2):
+
+title_pair = [
+    "KNL accelerator",
+    "Intel Broadwell 28 cores"
+    ]
+for idx,ax in enumerate(axes_pair):
     add_plot(ax, idx)
 
-ax.set_xscale('log', basex=2)
-ax.set_xticklabels([0,1,2,4,8,16,32,64,128,256])
+    ax.tick_params(axis='both', which='major',                   
+                   labelsize=15)
 
-plt.xlabel("nr of MPI ranks")
-plt.ylabel("normalized runtime")
-plt.legend()
-if stat_file == 0:
-    plt.title("Strong scaling jpm calculations on KNL compute node with MPI")
-else:
-    plt.title("Strong scaling jpm calculations on Jureca compute node with MPI")
+    ax.set_xscale('log', basex=2)
+    ax.set_xticklabels([0,1,2,4,8,16,32,64,128,256])
+    ax.set_title(title_pair[idx], fontsize=30)
+    ax.set_xlabel("nr of MPI ranks", fontsize=25)
+    if idx==0:
+        ax.set_ylabel("Runtime (sec.)",fontsize=25)
 
+    plt.legend()
+#plt.suptitle('Strong scaling behavior optimized part of the ASSET code', fontsize=30)
 plt.show()
-
+f.savefig('scale_plot.png', dpi=300, bbox_inches='tight')
 

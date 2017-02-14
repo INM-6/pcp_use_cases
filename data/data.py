@@ -84,7 +84,7 @@ if __name__ == "__main__":
        ["3c_sum_optimized",      "Combine\noperations"   ],
        ["4b_logprecompute",      "Precompute"                   ],
        ["5b_float32",            "Consistent\nprecision"  ],
-       ["knl_mpi_gpp",           "MPI on KNL",  "prob_method" ]
+       ["Jureca_16_ranks",           "MPI on KNL",  "prob_method" ]
         ]
 
     ##########################################
@@ -340,5 +340,5 @@ if __name__ == "__main__":
 
     plt.ylim(-5,  110)
     plt.show()
-    f.savefig('myfig.png', dpi=300)
+    f.savefig('myfig.png', dpi=300, bbox_inches='tight')
 
