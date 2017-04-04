@@ -35,6 +35,8 @@ SOFTWARE.
 #define SIMD_MATH_PRIMS_H
 
 #include<math.h>
+#include <omp.h>
+
 
 #ifdef __cplusplus
 extern "C" {
@@ -76,7 +78,7 @@ inline float expapprox(float val) {
                1.3671023382430374383648148e-2f))));
 }
 
-inline void expapprox_array(float* input, int entries)
+inline void expapprox_array_inner(float* input, int entries)
 {
    // __assume_aligned(input, 64);
       union { int i; float f; } xu, xu2;
@@ -107,14 +109,30 @@ inline void expapprox_array(float* input, int entries)
                   (c4 + b *
                    c5))));
     }
-      // Generated in Sollya with:
-      //   > f=remez(1-x*exp(-(x-1)*log(2)),
-      //             [|1,(x-1)*(x-2), (x-1)*(x-2)*x, (x-1)*(x-2)*x*x|],
-      //             [1,2], exp(-(x-1)*log(2)));
-      //   > plot(exp((x-1)*log(2))/(f+x)-1, [1,2]);
-      //   > f+x;
 
 }
+
+inline void expapprox_array(
+	float* input1,
+	int entries)
+{
+
+#pragma omp parallel
+	{
+		int number_of_thread = omp_get_num_threads();
+		int thread_idx = omp_get_thread_num();
+		int start_item = (entries * thread_idx) / number_of_thread;
+		int end_item = (entries * (thread_idx + 1)) / number_of_thread;
+		int items_local = end_item - start_item;
+
+
+		float * local_input1 = input1 + start_item;
+
+		expapprox_array_inner(local_input1, items_local);
+	}
+}
+
+
 
 /* Absolute error bounded by 1e-6 for normalized inputs
    Returns a finite number for +inf input
@@ -161,10 +179,15 @@ inline void logapprox_array(float* input, int entries)
     }
 }
 
-inline void logapprox_multiply_array(float* input1, float* input2,  int entries)
+
+inline void logapprox_multiply_array_outer(
+	float* input1,
+	float* input2,
+	int entries)
 {
-   // __assume_aligned(input1, 64);
-   // __assume_aligned(input2, 64);
+
+    __assume_aligned(input1, 64);
+    __assume_aligned(input2, 64);
 
     union { float f; int i; } valu;
     float exp, addcst, x;
@@ -199,6 +222,28 @@ inline void logapprox_multiply_array(float* input1, float* input2,  int entries)
     }
 }
 
+
+inline void logapprox_multiply_array(
+	float* input1,
+	float* input2,
+	int entries)
+{
+
+#pragma omp parallel
+	{
+		int number_of_thread = omp_get_num_threads();
+		int thread_idx = omp_get_thread_num();
+		int start_item = (entries * thread_idx) / number_of_thread;
+		int end_item = (entries * (thread_idx + 1)) / number_of_thread;
+		int items_local = end_item - start_item;
+
+
+		float * local_input1 = input1 + start_item;
+		float * local_input2 = input2 + start_item;
+
+		logapprox_multiply_array_outer(local_input1, local_input2, items_local);
+	}
+}
 
 inline void multiply_two_array(float* input1, float* input2,  int entries)
 {

@@ -54,7 +54,7 @@ from sklearn.cluster import dbscan as dbscan
 
 from timer import MultiTimer
 import cython_lib
-from mpi4py import MPI
+#from mpi4py import MPI
 
 # =============================================================================
 # Some Utility Functions to be dealt with in some way or another
@@ -1172,18 +1172,18 @@ def _jsf_uniform_orderstat_3d(u, alpha, n):
     iter_id = 0
     log_point1 = np.log(1.)
 
-    # #######################################
-    # TODO: With a blunt knive make the code MPI
-    comm = MPI.COMM_WORLD
-    size = comm.Get_size()
-    rank = comm.Get_rank()
-    #############################################
+    ## #######################################
+    ## TODO: With a blunt knive make the code MPI
+    #comm = MPI.COMM_WORLD
+    #size = comm.Get_size()
+    #rank = comm.Get_rank()
+    ##############################################
 
     MultiTimer( "  joint_probability_matrix  _jsf_uniform_orderstat_3d init")
     for matrix_entries in itertools.product(*lists):
-        if iter_id % size != rank:
-            iter_id += 1
-            continue 
+        #if iter_id % size != rank:
+        #    iter_id += 1
+        #    continue 
 
         iter_id += 1
         
@@ -1297,16 +1297,16 @@ def _jsf_uniform_orderstat_3d(u, alpha, n):
     # fixed with a consumer thingymajig
     #print "done: {0}".format(rank)
 
-    comm.Allreduce(
-        [Ptot, MPI.FLOAT],
-        [totals, MPI.FLOAT],
-        op = MPI.SUM
-        )
+    #comm.Allreduce(
+    #    [Ptot, MPI.FLOAT],
+    #    [totals, MPI.FLOAT],
+    #    op = MPI.SUM
+    #    )
 
 
 
 
-    return totals
+    return Ptot
 
 
 def _pmat_neighbors(mat, filter_shape, nr_largest=None, diag=0):

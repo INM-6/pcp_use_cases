@@ -1,8 +1,8 @@
 #
 # Makefile to only rebuild the extension if *.pyx changes
 #
-CXX = g++
-#CXX = icpc
+#CXX = g++
+CXX = icpc
 CYTHON = cython
 PYTHON = python
 
@@ -34,7 +34,7 @@ endif
 ifeq ($(CXX),icpc)
     CXXFLAGS = -m64
 	# For knl: -xmic-avx512 -xCOMMON-AVX512
-    OPTFLAGS =  -qopt-report=5 -O3 -no-vec
+    OPTFLAGS =  -qopt-report=5 -O3  # -qopt-report-phase=vec
 	#CPPFLAGS += -I/gpfs/homeb/pcp0/pcp0016/.local/lib/python2.7/site-packages/numpy/core/include/
 	ifdef VECTORIZE_OFF
 		OPTFLAGS += -no-vec

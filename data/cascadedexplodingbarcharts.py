@@ -8,18 +8,19 @@ import matplotlib.patches as patches
 # cascaded_exploding_bar_chart
 Create a cascade of two or more exploding bar-charts from data with controllable typesetting.
 
-![See graphic below for an rough example](/example.jpg?raw=true "") 
+![See graphic below for an rough example](/example.png?raw=true "") 
 
 ## Features
 1. Size of bars in, and the total number of bar-charts is generated from data
 2. Hight of bars based on raw data, normalized or percentage (each bar normalized individually)
-3. Show multiple labeled relationships between stacks
-4. Explosion lines to show relation between stacked bars
-5. The explosion wedge can have labels and a shaded background
-6. Stacked bars and boxes can have labels
-7. Box labels will not display when text is to big for box (controllable)
-8. Only matplotlib needed
-9. Most textual and graphical elements can be typeset without changing the code
+3. Option to display a relative size bar when normalizing the data
+4. Show multiple labeled relationships between stacks
+5. Explosion lines to show relation between stacked bars
+6. The explosion wedge can have labels and a shaded background
+7. Stacked bars and boxes can have labels
+8. Box labels will not display when text is to big for box (controllable)
+9. Only matplotlib needed
+10. Most textual and graphical elements can be typeset without changing the code
     
 ## Usage
 Call cascaded_exploding_barcharts() with your data. If you want to typeset you
@@ -182,16 +183,22 @@ exp_barch_tp_set = {
     # Offset of text from left side of bars
     "bar_label_offset": 0.15,
 
+    # The relative bar settings
+    "relative":True,
+    "relative_box":{ "width":0.04, "lw":0, "zorder":5, "hatch":"-", 
+                    "edgecolor":"#ffffff"}, # The color with - is not displayed correctly. always grayish
+    "relative_box_h_offset": -0.005,
+
     # Line type for the lines between the bars
     "exploding_line":{'color':'k', "ls":'--', "lw":1.0, "zorder":4},
     # Label between the explosion lines
     "explode_label": True,
     "explode_label_text":{"ha":'left',  "va":'center', "fontsize":13,
                           "style":'italic', "zorder":4},
-
     #offset left label
     "explode_label_offset_left": 0.52,
-    # Correction in vertical position (used when the wedges are skewed up or down
+    # Correction in vertical position (used when the wedges are skewed up or down)
+    # v_offset controlls the magnitude of the correction 0 = no correction
     "explode_label_v_offset_left": 0.15, 
 
     #offset right side label
@@ -234,6 +241,7 @@ def convert_color(color, multiplicateion_factor=1.0):
 
 def create_bar_chart_with_emphasis(ax, data, emphasis = None,
                                    bar_label = None,
+                                   bar_sum = None,
                                    stack_idx = 0):
     """
     Create a stacked bar-chart with some bars emphasised and a lable in the box
@@ -289,7 +297,6 @@ def create_bar_chart_with_emphasis(ax, data, emphasis = None,
 
           
         if exp_barch_tp_set["box_label"]:
-
             text_var = ax.text(stack_idx + exp_barch_tp_set["box_label_offset"],
                                pos_sum + 0.5 * value,
                     label, **exp_barch_tp_set["box_label_text"])
@@ -311,6 +318,14 @@ def create_bar_chart_with_emphasis(ax, data, emphasis = None,
         text_var = ax.text(stack_idx + exp_barch_tp_set["bar_label_offset"],
                           pos_sum, bar_label,
                           **exp_barch_tp_set["bar_label_text"])
+
+    # Add the relative size bar
+    # TODO: Make selectable
+    if exp_barch_tp_set["relative"]:
+        ax.bar(stack_idx + exp_barch_tp_set["relative_box_h_offset"],
+           bar_sum, bottom=0, color='k', 
+                    align='edge', 
+                    label=label, **exp_barch_tp_set["relative_box"])
 
 
 def explosion_line_y_top_and_bottom(data, emphasis):
@@ -399,25 +414,24 @@ def display_explosion(ax, data, emphasis, representation, chart_id=0):
     ax.plot(xs_top_line, ys_top_line, 
             **exp_barch_tp_set["exploding_line"])
 
-
-
     # Add text at the centre to show the size of the 'sum'
         # Add the label of the bar (if there)
     if exp_barch_tp_set["explode_label"]:
-        # The vertical location of the label might be a little offset of the 
+        # The vertical location of the label might be a little offset if the 
         # wedge has a large vertical shift to the next bar
         # Use the explode_label_offset combined with the ys_top_line and bottom
         # line to create an interpolation location which is better
-        
         mid_left = (ys_top_line[0] + ys_bottom_line[0]) / 2
         mid_right = (ys_top_line[1] + ys_bottom_line[1]) / 2
+        # Calculate side and direction of shift between bards
         midline_dx = mid_right - mid_left
-        # DO some magix to correct the vectical allignment of the text
-        # due to possible offset in the explode wedge
 
+        # left side of 
         left_cor = exp_barch_tp_set["explode_label_v_offset_left"]
         left_offset = exp_barch_tp_set["explode_label_offset_left"] 
+        # Calculate some fraction based on the offset and the width
         fraction_away_from_left = left_offset / .50
+        # magnitude correction * fraction times the dx = correction
         correction_left = left_cor * fraction_away_from_left * midline_dx
         if not emphasis[0][2] is None:
             ax.text(chart_id + exp_barch_tp_set["explode_label_offset_left"], 
@@ -426,11 +440,10 @@ def display_explosion(ax, data, emphasis, representation, chart_id=0):
                   **exp_barch_tp_set["explode_label_text"])
 
 
-        # DO some magix to correct the vectical allignment of the text
-        # due to possible offset in the explode wedge
+        # Detail explanantion can be found in left side of correctopm
         right_cor = exp_barch_tp_set["explode_label_v_offset_right"]
         right_offset = exp_barch_tp_set["explode_label_offset_right"] 
-        fraction_away_from_right = (1 - right_offset ) / .50
+        fraction_away_from_right = (1 - right_offset ) / .50  
         correction_right = - right_cor * fraction_away_from_right * midline_dx
         if not emphasis[1][2] is None:
             ax.text(chart_id + exp_barch_tp_set["explode_label_offset_right"], 
@@ -465,22 +478,38 @@ def display_explosion(ax, data, emphasis, representation, chart_id=0):
       
 def normalize_or_percentage_data(data, representation=None):
     """
-    Ugly quick and dirty normalization or percentage version of the input data
+    Normalization or percentage version of the input data
+    Returns the total bar size (possibly normalized) for relative bar plotting
     """
-    if not representation is None:
-        for bar in data:
-            #Calculate the sum
-            sum = 0.
-            for entry in bar:
-                sum += entry[0]
+    
+    bar_sums = []
+    first_bar_sum = None
+    for bar in data:
+        #Calculate the sum (also needed for the relative bar length)
+        sum = 0.
+        for entry in bar:
+            sum += entry[0]
 
+        # If we are processing the first bar
+        if first_bar_sum is None:
+            first_bar_sum = sum
+
+        if not representation is None:
             #now normalize or percentage
             size_bar = 1.0
             if representation == "percentage":
                 size_bar = 100.0  # %
 
+            norm_sum = None
             for entry in bar:
-                 entry[0] = (entry[0] / sum ) * size_bar
+                    norm_sum = (entry[0] / sum ) * size_bar
+                    entry[0] = norm_sum
+
+            bar_sums.append((sum / first_bar_sum) * size_bar )
+        else:
+            bar_sums.append(sum)
+
+    return bar_sums
 
 def cascaded_exploding_barcharts(ax, data, emphasis, bar_labels,
                                  representation=None):
@@ -518,12 +547,12 @@ def cascaded_exploding_barcharts(ax, data, emphasis, bar_labels,
     """
     # Get a deep copy to allow mutations on the data for normalization
     data_internal = copy.deepcopy(data)
-    normalize_or_percentage_data(data_internal, representation)
+    bar_sums = normalize_or_percentage_data(data_internal, representation)
 
     # First bar is created outside of the loop, because we to explode n-1 times
 
 
-    create_bar_chart_with_emphasis(ax, data_internal[0], emphasis[0], bar_labels[0],
+    create_bar_chart_with_emphasis(ax, data_internal[0], emphasis[0], bar_labels[0], bar_sums[0],
                                    0)
 
     # Todo this -1 is ugly!! but needed for the explosion lines: I like the
@@ -535,7 +564,7 @@ def cascaded_exploding_barcharts(ax, data, emphasis, bar_labels,
 
 
         create_bar_chart_with_emphasis(ax, data_internal[idx+1], 
-                emphasis[idx+1], bar_labels[idx+1], 
+                emphasis[idx+1], bar_labels[idx+1], bar_sums[idx+1],
                 idx+1)
         
 

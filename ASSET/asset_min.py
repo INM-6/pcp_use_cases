@@ -8,37 +8,37 @@ import elephant.statistics as estats
 import asset as asset
 import elephant.spike_train_generation as stg
 
-# #######################################
-# TODO: With a blunt knive make the code MPI
-from mpi4py import MPI
-comm = MPI.COMM_WORLD
-size = comm.Get_size()
-rank = comm.Get_rank()
-#############################################
+## #######################################
+## TODO: With a blunt knive make the code MPI
+#from mpi4py import MPI
+#comm = MPI.COMM_WORLD
+#size = comm.Get_size()
+#rank = comm.Get_rank()
+##############################################
 
 import time
 
-def barrier(comm, tag=0, sleep=0.01):
-    """
-    MPI barrier fonction
-    that solve the problem that Idle process occupies 100% CPU.
-    See: https://goo.gl/NofOO9
-    see: https://groups.google.com/forum/#!topic/mpi4py/nArVuMXyyZI
-    """
-    size = comm.Get_size()
-    if size == 1:
-        return
-    rank = comm.Get_rank()
-    mask = 1
-    while mask < size:
-        dst = (rank + mask) % size
-        src = (rank - mask + size) % size
-        req = comm.isend(None, dst, tag)
-        while not comm.Iprobe(src, tag):
-            time.sleep(sleep)
-        comm.recv(None, src, tag)
-        req.Wait()
-        mask <<= 1
+#def barrier(comm, tag=0, sleep=0.01):
+#    """
+#    MPI barrier fonction
+#    that solve the problem that Idle process occupies 100% CPU.
+#    See: https://goo.gl/NofOO9
+#    see: https://groups.google.com/forum/#!topic/mpi4py/nArVuMXyyZI
+#    """
+#    size = comm.Get_size()
+#    if size == 1:
+#        return
+#    rank = comm.Get_rank()
+#    mask = 1
+#    while mask < size:
+#        dst = (rank + mask) % size
+#        src = (rank - mask + size) % size
+#        req = comm.isend(None, dst, tag)
+#        while not comm.Iprobe(src, tag):
+#            time.sleep(sleep)
+#        comm.recv(None, src, tag)
+#        req.Wait()
+#        mask <<= 1
 
 
 MultiTimer("import")
@@ -93,9 +93,9 @@ MultiTimer("generate data")
 pmat = np.zeros((200,200))
 
 MultiTimer("before barrier")
-barrier(comm)
-
-if rank == 0:
+#barrier(comm)
+rank = 0
+if True: #rank == 0:
 
     print rank
     MultiTimer("rank zero work")
@@ -124,10 +124,10 @@ if rank == 0:
             sts, binsize, dt=T, j = dither_T, n_surr=n_surr)
 
 
-MultiTimer("prob_method")
-barrier(comm)
-comm.Bcast(pmat)
-MultiTimer("Bcast")
+#MultiTimer("prob_method")
+#barrier(comm)
+#comm.Bcast(pmat)
+#MultiTimer("Bcast")
 
 # Compute the joint probability matrix
 jmat = asset.joint_probability_matrix(
@@ -144,7 +144,7 @@ MultiTimer("mask_matrices")
 cmat = asset.cluster_matrix_entries(mmat, eps, minsize, stretch)
 MultiTimer("cluster_matrix_entries")
 
-
+rank = 0
 
 if  rank is 0:
     # Extract the SSEs from the cluster matrix

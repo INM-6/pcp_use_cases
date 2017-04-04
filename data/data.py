@@ -84,7 +84,7 @@ if __name__ == "__main__":
        ["3c_sum_optimized",      "Combine\noperations"   ],
        ["4b_logprecompute",      "Precompute"                   ],
        ["5b_float32",            "Consistent\nprecision"  ],
-       ["Jureca_16_ranks",           "MPI on KNL",  "prob_method" ]
+       ["knl_mpi_gpp",           "MPI on KNL",  "prob_method" ]
         ]
 
     ##########################################
@@ -296,6 +296,9 @@ if __name__ == "__main__":
     exp_barch_tp_set["explode_label_v_offset_left"]= 0.1
     #offset right side label
     exp_barch_tp_set["explode_label_offset_right"]= 0.80
+
+    exp_barch_tp_set["relative_box"]={ "width":0.07, "lw":0, "zorder":5, "hatch":"-", 
+                    "edgecolor":"#ffffff"} # The color with - is not displayed correctly. always grayish
 
     exp_barch_tp_set["explode_label_text"]={"ha":'left',  "va":'center', "fontsize":15,
                           "style":'italic', "zorder":4}
