@@ -1152,6 +1152,16 @@ def _jsf_uniform_orderstat_3d(u, alpha, n):
     for matrix_entries in itertools.product(*lists):
         iter_id += 1
 
+        ####################################
+        # 2. Test for valid pyramid and exit loop early
+        ############### Output arrays are exactly equal!! ###################
+        if (matrix_entries[0] < matrix_entries[1] or
+            matrix_entries[1] < matrix_entries[2] or
+            matrix_entries[2] < matrix_entries[3] or
+            matrix_entries[3] < matrix_entries[4]):
+                # The shape of the matrix is not correct so exit this loop
+                continue
+        ############################################
 
         di = -np.diff(np.hstack([n, list(matrix_entries), 0]))
         MultiTimer( "joint_probability_matrix _jsf_uniform_orderstat_3d diff", 2)
@@ -1163,8 +1173,6 @@ def _jsf_uniform_orderstat_3d(u, alpha, n):
             # nans when both dU_abk and dI_abk are 0, and is mathematically
             # correct). dU2 still contains 0s, so that when below exp(log(U2))
             # is computed, warnings are arosen; they are no problem though.
-            dU2 = dU.copy()
-            dU2[dI == 0] = 1.
 
             # Compute for each i=0,...,A-1 and j=0,...,B-1: log(I_ij !)
             # Creates a matrix log_dIfactorial of shape (A, B)
@@ -1182,7 +1190,6 @@ def _jsf_uniform_orderstat_3d(u, alpha, n):
             log_DU2 = dU_scratch
             #########################################################################
 
-            #log_DU2 = np.log(dU2)
             MultiTimer( "joint_probability_matrix  _jsf_uniform_orderstat_3d log_DU2",2 )
             prod_DU2 = dI * log_DU2
             MultiTimer( "joint_probability_matrix  _jsf_uniform_orderstat_3d prod_DU2", 2)
