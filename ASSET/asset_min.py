@@ -1,4 +1,4 @@
-from timer import MultiTimer
+from simplepytimer import MultiTimer
 
 import numpy as np
 import quantities as pq
@@ -107,3 +107,6 @@ file.write(str(sse_found))
 
 file.close()
 MultiTimer("end").print_timings()
+file_name = "timings.csv"
+fp = open(file_name,"w")
+MultiTimer.to_file_like_as_csv(fp)

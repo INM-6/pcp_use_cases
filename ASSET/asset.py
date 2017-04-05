@@ -52,7 +52,7 @@ import elephant.conversion as conv
 import elephant.spike_train_surrogates as spike_train_surrogates
 from sklearn.cluster import dbscan as dbscan
 
-from timer import MultiTimer
+from simplepytimer import MultiTimer
 
 # =============================================================================
 # Some Utility Functions to be dealt with in some way or another
@@ -1140,14 +1140,14 @@ def _jsf_uniform_orderstat_3d(u, alpha, n):
     # by matrix algebra, working along the third dimension (axis 0)
     Ptot = np.zeros((A, B))  # initialize all A x B probabilities to 0
     iter_id = 0
-    MultiTimer( "  joint_probability_matrix  _jsf_uniform_orderstat_3d init")
+    MultiTimer( "joint_probability_matrix _jsf_uniform_orderstat_3d init", 1)
     for i in itertools.product(*lists):
         iter_id += 1
         di = -np.diff(np.hstack([n, list(i), 0]))
-        MultiTimer( "    joint_probability_matrix  _jsf_uniform_orderstat_3d diff")
+        MultiTimer( "joint_probability_matrix _jsf_uniform_orderstat_3d diff", 2)
         if np.all(di >= 0):
             dI = di.reshape((-1, 1, 1)) * np.ones((A, B))  # shape (d+1, A, B)
-            MultiTimer( "    joint_probability_matrix  _jsf_uniform_orderstat_3d reshape")
+            MultiTimer( "joint_probability_matrix  _jsf_uniform_orderstat_3d reshape", 2)
             # for each a=0,1,...,A-1 and b=0,1,...,B-1, replace dU_abk with 1
             # whenever dI_abk = 0, so that dU_abk ** dI_abk = 1 (this avoids
             # nans when both dU_abk and dI_abk are 0, and is mathematically
@@ -1160,21 +1160,21 @@ def _jsf_uniform_orderstat_3d(u, alpha, n):
             # Creates a matrix log_dIfactorial of shape (A, B)
             log_di_factorial = np.sum([np.log(np.arange(1, di_k + 1)).sum()
                                        for di_k in di if di_k >= 1])
-            MultiTimer( "    joint_probability_matrix  _jsf_uniform_orderstat_3d sum")
+            MultiTimer( "joint_probability_matrix  _jsf_uniform_orderstat_3d sum", 2)
             # Compute for each i,j the contribution to the total
             # probability given by this step, and add it to the total prob.
             log_DU2 = np.log(dU2)
-            MultiTimer( "    joint_probability_matrix  _jsf_uniform_orderstat_3d log_DU2")
+            MultiTimer( "joint_probability_matrix  _jsf_uniform_orderstat_3d log_DU2",2 )
             prod_DU2 = dI * log_DU2
-            MultiTimer( "    joint_probability_matrix  _jsf_uniform_orderstat_3d prod_DU2")
+            MultiTimer( "joint_probability_matrix  _jsf_uniform_orderstat_3d prod_DU2", 2)
             sum_DU2 = prod_DU2.sum(axis=0)
-            MultiTimer( "    joint_probability_matrix  _jsf_uniform_orderstat_3d sum_DU2")
+            MultiTimer( "joint_probability_matrix  _jsf_uniform_orderstat_3d sum_DU2",2 )
             logP = sum_DU2 - log_di_factorial
-            MultiTimer( "    joint_probability_matrix  _jsf_uniform_orderstat_3d log")
+            MultiTimer( "joint_probability_matrix  _jsf_uniform_orderstat_3d log", 2)
             Ptot += np.exp(logP + logK)
-            MultiTimer( "    joint_probability_matrix  _jsf_uniform_orderstat_3d exp")
+            MultiTimer( "joint_probability_matrix  _jsf_uniform_orderstat_3d exp", 2)
 
-        MultiTimer( "    joint_probability_matrix  _jsf_uniform_orderstat_3d step")
+        MultiTimer( "joint_probability_matrix  _jsf_uniform_orderstat_3d step",2)
     return Ptot
 
 
@@ -1347,6 +1347,19 @@ def joint_probability_matrix(
     n = l * (1 + 2 * w) - w * (w + 1)  # number of entries covered by kernel
     jpvmat = _jsf_uniform_orderstat_3d(pmat_neighb, alpha, n)
     MultiTimer( "  joint_probability_matrix  _jsf_uniform_orderstat_3d")
+
+
+    fp = open("data/original.npy", "r")
+    data = np.load(fp)
+
+    if not np.array_equal(data, jpvmat):
+        print "*************** Output arrays not equal!! *************************"
+        fp = open("diffent_output.npy","w")
+
+        np.save(fp, jpvmat, allow_pickle=False)
+    else:
+        print "############### Output arrays are exactly equal!! ###################"
+
     return 1. - jpvmat
 
 
