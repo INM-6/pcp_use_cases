@@ -1129,7 +1129,7 @@ def _jsf_uniform_orderstat_3d(u, alpha, n):
     # Add to the 3D matrix u a bottom layer identically equal to alpha and a
     # top layer identically equal to 1. Then compute the difference dU along
     # the first dimension.
-    u_extended = np.ones((d + 2, A, B))
+    u_extended = np.ones((d + 2, A, B), dtype=np.float32)
     u_extended[0] = u_extended[0] * alpha
     for layer_idx, uu in enumerate(u):
         u_extended[layer_idx + 1] = u[layer_idx]
@@ -1147,13 +1147,13 @@ def _jsf_uniform_orderstat_3d(u, alpha, n):
     # 3. faster way to fill array
     ############### Output arrays are exactly equal!! ###################
     # TODO: What is this 6??? MAGIC NUMBER!!!
-    dI = np.empty((6, A, B))  # TODO: Use int??
+    dI = np.empty((6, A, B), dtype=np.float32)  # TODO: Use int??
     ###############################################
 
 
     # Compute the probabilities at each (a, b), a=0,...,A-1, b=0,...,B-1
     # by matrix algebra, working along the third dimension (axis 0)
-    Ptot = np.zeros((A, B))  # initialize all A x B probabilities to 0
+    Ptot = np.zeros((A, B), dtype=np.float32)  # initialize all A x B probabilities to 0
     iter_id = 0
     MultiTimer( "joint_probability_matrix _jsf_uniform_orderstat_3d init", 1)
     for matrix_entries in itertools.product(*lists):
