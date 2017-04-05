@@ -1136,14 +1136,24 @@ def _jsf_uniform_orderstat_3d(u, alpha, n):
     dU = np.diff(u_extended, axis=0)  # shape (d+1, A, B)
     del u_extended
 
+    ####################################
+    # 1. Move log outside of the inner loop
+    dU_log = np.log(dU)
+    dU_scratch = np.empty_like(dU_log)
+    log_point1 = np.log(1.)
+    #############################################
+
+
     # Compute the probabilities at each (a, b), a=0,...,A-1, b=0,...,B-1
     # by matrix algebra, working along the third dimension (axis 0)
     Ptot = np.zeros((A, B))  # initialize all A x B probabilities to 0
     iter_id = 0
     MultiTimer( "joint_probability_matrix _jsf_uniform_orderstat_3d init", 1)
-    for i in itertools.product(*lists):
+    for matrix_entries in itertools.product(*lists):
         iter_id += 1
-        di = -np.diff(np.hstack([n, list(i), 0]))
+
+
+        di = -np.diff(np.hstack([n, list(matrix_entries), 0]))
         MultiTimer( "joint_probability_matrix _jsf_uniform_orderstat_3d diff", 2)
         if np.all(di >= 0):
             dI = di.reshape((-1, 1, 1)) * np.ones((A, B))  # shape (d+1, A, B)
@@ -1163,7 +1173,16 @@ def _jsf_uniform_orderstat_3d(u, alpha, n):
             MultiTimer( "joint_probability_matrix  _jsf_uniform_orderstat_3d sum", 2)
             # Compute for each i,j the contribution to the total
             # probability given by this step, and add it to the total prob.
-            log_DU2 = np.log(dU2)
+
+            ####################################################################
+            # 1. Use precomputed log
+            ############### Output arrays are exactly equal!! ###################
+            np.copyto(dU_scratch, dU_log)
+            dU_scratch[dI == 0] = log_point1
+            log_DU2 = dU_scratch
+            #########################################################################
+
+            #log_DU2 = np.log(dU2)
             MultiTimer( "joint_probability_matrix  _jsf_uniform_orderstat_3d log_DU2",2 )
             prod_DU2 = dI * log_DU2
             MultiTimer( "joint_probability_matrix  _jsf_uniform_orderstat_3d prod_DU2", 2)
