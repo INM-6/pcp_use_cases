@@ -1143,6 +1143,13 @@ def _jsf_uniform_orderstat_3d(u, alpha, n):
     log_point1 = np.log(1.)
     #############################################
 
+    ############################
+    # 3. faster way to fill array
+    ############### Output arrays are exactly equal!! ###################
+    # TODO: What is this 6??? MAGIC NUMBER!!!
+    dI = np.empty((6, A, B))  # TODO: Use int??
+    ###############################################
+
 
     # Compute the probabilities at each (a, b), a=0,...,A-1, b=0,...,B-1
     # by matrix algebra, working along the third dimension (axis 0)
@@ -1166,7 +1173,14 @@ def _jsf_uniform_orderstat_3d(u, alpha, n):
         di = -np.diff(np.hstack([n, list(matrix_entries), 0]))
         MultiTimer( "joint_probability_matrix _jsf_uniform_orderstat_3d diff", 2)
         if np.all(di >= 0):
-            dI = di.reshape((-1, 1, 1)) * np.ones((A, B))  # shape (d+1, A, B)
+
+            ##########################################################
+            # 3. faster way to reshape the matrix for usage
+            ############### Output arrays are exactly equal!! ###################
+            for idx in range(len(di)):
+                dI[idx,:,:].fill(di[idx])
+            ##################################################################
+
             MultiTimer( "joint_probability_matrix  _jsf_uniform_orderstat_3d reshape", 2)
             # for each a=0,1,...,A-1 and b=0,1,...,B-1, replace dU_abk with 1
             # whenever dI_abk = 0, so that dU_abk ** dI_abk = 1 (this avoids
