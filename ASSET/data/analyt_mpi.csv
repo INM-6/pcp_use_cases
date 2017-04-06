@@ -1,0 +1,35 @@
+#Total run time time (sec) , 2.97612595558
+#%,name,count,total time spend (sec)
+  0,import,1,0.0
+  0,init,1,0.0001380443573
+  1,generate data,1,0.0233500003815
+  2,intersection_matrix,1,0.047926902771
+  6,prob_method instant calc,1,0.185702085495
+ 13,prob_method instant mpi,1,0.372875928879
+  5,prob_method analyt prep,1,0.141909122467
+  3,prob_method analyt loop,1,0.0950698852539
+  0,prob_method analyt,1,0.000564098358154
+  0,prob_method,1,4.05311584473e-06
+  0,    joint_probability_matrix  _pmat_neighbors init ,1,0.000382900238037
+  2,    joint_probability_matrix  _pmat_neighbors flatten ,196,0.0545058250427
+  0,    joint_probability_matrix  _pmat_neighbors sort ,196,0.00754547119141
+  0,    joint_probability_matrix  _pmat_neighbors step ,196,0.000775814056396
+  0,  joint_probability_matrix  _pmat_neighbors,1,3.81469726562e-06
+  0,joint_probability_matrix _jsf_uniform_orderstat_3d init,1,0.00941920280457
+  9,joint_probability_matrix _jsf_uniform_orderstat_3d diff,1774,0.256613254547
+  5,joint_probability_matrix  _jsf_uniform_orderstat_3d reshape,1774,0.151291370392
+  3,joint_probability_matrix  _jsf_uniform_orderstat_3d sum,1774,0.100138425827
+ 10,joint_probability_matrix  _jsf_uniform_orderstat_3d copy_log_DU2,1774,0.290271520615
+  7,joint_probability_matrix  _jsf_uniform_orderstat_3d diag_log_DU2,1774,0.222754001617
+  0,joint_probability_matrix  _jsf_uniform_orderstat_3d log_DU2,1774,0.00324273109436
+ 11,joint_probability_matrix  _jsf_uniform_orderstat_3d prod_DU2,1774,0.31663274765
+  7,joint_probability_matrix  _jsf_uniform_orderstat_3d sum_DU2,1774,0.198187351227
+  2,joint_probability_matrix  _jsf_uniform_orderstat_3d log,1774,0.0516035556793
+  3,joint_probability_matrix  _jsf_uniform_orderstat_3d exp,1774,0.103028774261
+  0,joint_probability_matrix  _jsf_uniform_orderstat_3d step,1774,0.0031042098999
+ 11,  joint_probability_matrix  _jsf_uniform_orderstat_3d,1,0.333219051361
+  0,joint_probability_matrix,1,0.00520992279053
+  0,mask_matrices,1,0.000382900238037
+  0,cluster_matrix_entries,1,0.000102996826172
+  0,extract_sse,1,2.90870666504e-05
+  0,end,1,0.000140905380249

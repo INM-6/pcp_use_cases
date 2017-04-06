@@ -1098,12 +1098,27 @@ def probability_matrix_analytical(
     imat, xx, yy = intersection_matrix(
         spiketrains, binsize=binsize, dt=dt, t_start_x=t_start_x,
         t_start_y=t_start_y)
+    MultiTimer("prob_method analyt prep", 3)
 
     pmat = np.zeros(imat.shape)
+   
+    if mpi_accelerated:
+        comm = MPI.COMM_WORLD
+        size = comm.Get_size()
+        rank = comm.Get_rank()
+
     for i in _xrange(imat.shape[0]):
+        if mpi_accelerated and i % size != rank:
+            continue
         for j in _xrange(imat.shape[1]):
             pmat[i, j] = scipy.stats.poisson.cdf(imat[i, j] - 1, Mu[i, j])
+       
+    MultiTimer("prob_method analyt loop", 3) 
+    if mpi_accelerated:    
+        for i in _xrange(imat.shape[0]):
+            pmat[i] = comm.bcast(pmat[i], root=i % size)
 
+    MultiTimer("prob_method analyt mpi", 3)
     # Substitute 0.5 to the elements along the main diagonal
     diag_id, elems = _reference_diagonal(xx, yy)
     if diag_id is not None:
