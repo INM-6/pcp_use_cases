@@ -99,14 +99,25 @@ MultiTimer("cluster_matrix_entries")
 sse_found = asset.extract_sse(sts, xx, yy, cmat)
 
 MultiTimer("extract_sse")
-print sse_found
+
+try:
+    from mpi4py import MPI
+    mpi_accelerated = True
+except:
+    mpi_accelerated = False
+
+if mpi_accelerated and not MPI.COMM_WORLD.Get_rank() is 0:
+    exit(0)
+
+
 
 file = open("sse_found", "w")
-
 file.write(str(sse_found))
-
 file.close()
+
+
 MultiTimer("end").print_timings()
 file_name = "timings.csv"
 fp = open(file_name,"w")
 MultiTimer.to_file_like_as_csv(fp)
+    

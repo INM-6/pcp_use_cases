@@ -35,7 +35,8 @@ for entry in difference.flatten():
 for orig, run2, diff in zip(original.flatten(),
                             different.flatten(),
                             difference.flatten()):
-    print orig, run2, diff
+    #print orig, run2, diff
+    pass
 
 print data.values()
 print min, max

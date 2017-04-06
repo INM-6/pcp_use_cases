@@ -61,9 +61,10 @@ except:
 
 
 try:
-    import mpi4py
+    from mpi4py import MPI
     mpi_accelerated = True
 
+    import time
     # Helper function
     def barrier(comm, tag=0, sleep=0.01):
         """
@@ -1196,8 +1197,6 @@ def _jsf_uniform_orderstat_3d(u, alpha, n):
         rank = comm.Get_rank()
     ##############################################
 
-
-
     # Compute the probabilities at each (a, b), a=0,...,A-1, b=0,...,B-1
     # by matrix algebra, working along the third dimension (axis 0)
     Ptot = np.zeros((A, B), dtype=np.float32)  # initialize all A x B probabilities to 0
@@ -1274,22 +1273,22 @@ def _jsf_uniform_orderstat_3d(u, alpha, n):
 
             MultiTimer( "joint_probability_matrix  _jsf_uniform_orderstat_3d exp", 2)
 
-        MultiTimer( "joint_probability_matrix  _jsf_uniform_orderstat_3d step",2)
+        MultiTimer( "joint_probability_matrix  _jsf_uniform_orderstat_3d step",1)
 
-        if mpi_accelerated:
-            totals = np.zeros((dim_A, dim_B)).astype(np.float32)
+    if mpi_accelerated:
+        totals = np.zeros((A, B)).astype(np.float32)
 
-            # wait for the other treads to complete (use friendly barrier)
-            # Letting it hit allreduce would result in busy wait!
-            barrier(comm)
+        # wait for the other treads to complete (use friendly barrier)
+        # Letting it hit allreduce would result in busy wait!
+        barrier(comm)
 
-            # exchange all the results
-            comm.Allreduce(
-                [Ptot, MPI.FLOAT],
-                [totals, MPI.FLOAT],
-                op = MPI.SUM)
-            return totals           
-            MultiTimer( "joint_probability_matrix  _jsf_uniform_orderstat_3d mpi_exchange",2)
+        # exchange all the results
+        comm.Allreduce(
+            [Ptot, MPI.FLOAT],
+            [totals, MPI.FLOAT],
+            op = MPI.SUM)
+        return totals           
+        MultiTimer( "joint_probability_matrix  _jsf_uniform_orderstat_3d mpi_exchange",1)
 
     return Ptot
 
@@ -1465,7 +1464,7 @@ def joint_probability_matrix(
     MultiTimer( "  joint_probability_matrix  _jsf_uniform_orderstat_3d")
 
 
-    fp = open("data/original.npy", "r")
+    fp = open("data/new_output.npy", "r")
     data = np.load(fp)
 
     if not np.array_equal(data, jpvmat):
