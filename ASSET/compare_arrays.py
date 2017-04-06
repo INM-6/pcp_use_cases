@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import collections
 
 
-fp = open("data/original.npy", "r")
+fp = open("data/new_output.npy", "r")
 
 original = np.load(fp).astype(dtype=np.float32)
 
@@ -19,8 +19,17 @@ norm_difference = difference / ((original + different) / 2)
 difference = norm_difference
 
 data = collections.defaultdict(int)
+min = 9999
+max = -9999
+
 for entry in difference.flatten():
+    if entry > max:
+        max = entry
+    if entry < min:
+        min =entry
+
     data[entry] += 1
+
 
 
 for orig, run2, diff in zip(original.flatten(),
@@ -28,11 +37,10 @@ for orig, run2, diff in zip(original.flatten(),
                             difference.flatten()):
     print orig, run2, diff
 
+print data.values()
+print min, max
 
 
-
-print len(data.keys())
-
-plt.hist(data.keys(), weights=data.values(), bins=len(data.keys()))
+plt.hist(data.keys(), weights=data.values(), bins=50)
 
 plt.show()

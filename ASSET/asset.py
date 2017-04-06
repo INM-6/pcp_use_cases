@@ -53,6 +53,43 @@ import elephant.spike_train_surrogates as spike_train_surrogates
 from sklearn.cluster import dbscan as dbscan
 
 from simplepytimer import MultiTimer
+try:
+    import cython_lib
+    cython_accelerated = True
+except:
+    cython_accelerated = False
+
+
+try:
+    import mpi4py
+    mpi_accelerated = True
+
+    # Helper function
+    def barrier(comm, tag=0, sleep=0.01):
+        """
+        MPI barrier function
+        that solves the problem that Idle process occupies 100% CPU.
+        See: https://goo.gl/NofOO9
+        see: https://groups.google.com/forum/#!topic/mpi4py/nArVuMXyyZI
+        """
+        size = comm.Get_size()
+        if size == 1:
+            return
+        rank = comm.Get_rank()
+        mask = 1
+        while mask < size:
+            dst = (rank + mask) % size
+            src = (rank - mask + size) % size
+            req = comm.isend(None, dst, tag)
+            while not comm.Iprobe(src, tag):
+                time.sleep(sleep)
+            comm.recv(None, src, tag)
+            req.Wait()
+            mask <<= 1
+
+except:
+    mpi_accelerated = False
+
 
 # =============================================================================
 # Some Utility Functions to be dealt with in some way or another
@@ -1151,12 +1188,27 @@ def _jsf_uniform_orderstat_3d(u, alpha, n):
     ###############################################
 
 
+    ## #######################################
+    ## TODO: MPI 
+    if mpi_accelerated:
+        comm = MPI.COMM_WORLD
+        size = comm.Get_size()
+        rank = comm.Get_rank()
+    ##############################################
+
+
+
     # Compute the probabilities at each (a, b), a=0,...,A-1, b=0,...,B-1
     # by matrix algebra, working along the third dimension (axis 0)
     Ptot = np.zeros((A, B), dtype=np.float32)  # initialize all A x B probabilities to 0
     iter_id = 0
     MultiTimer( "joint_probability_matrix _jsf_uniform_orderstat_3d init", 1)
     for matrix_entries in itertools.product(*lists):
+        # if we are running with MPI
+        if mpi_accelerated and iter_id % size != rank:
+            iter_id += 1
+            continue 
+
         iter_id += 1
 
         ####################################
@@ -1200,7 +1252,10 @@ def _jsf_uniform_orderstat_3d(u, alpha, n):
             # 1. Use precomputed log
             ############### Output arrays are exactly equal!! ###################
             np.copyto(dU_scratch, dU_log)
+            MultiTimer( "joint_probability_matrix  _jsf_uniform_orderstat_3d copy_log_DU2",2 )
             dU_scratch[dI == 0] = log_point1
+            
+            MultiTimer( "joint_probability_matrix  _jsf_uniform_orderstat_3d diag_log_DU2",2 )
             log_DU2 = dU_scratch
             #########################################################################
 
@@ -1211,10 +1266,31 @@ def _jsf_uniform_orderstat_3d(u, alpha, n):
             MultiTimer( "joint_probability_matrix  _jsf_uniform_orderstat_3d sum_DU2",2 )
             logP = sum_DU2 - log_di_factorial
             MultiTimer( "joint_probability_matrix  _jsf_uniform_orderstat_3d log", 2)
-            Ptot += np.exp(logP + logK)
+            if cython_accelerated:
+                cython_lib.accelerated.exp_opt_array(logP, logK) 
+                Ptot += logP
+            else:
+                Ptot += np.exp(logP + logK)
+
             MultiTimer( "joint_probability_matrix  _jsf_uniform_orderstat_3d exp", 2)
 
         MultiTimer( "joint_probability_matrix  _jsf_uniform_orderstat_3d step",2)
+
+        if mpi_accelerated:
+            totals = np.zeros((dim_A, dim_B)).astype(np.float32)
+
+            # wait for the other treads to complete (use friendly barrier)
+            # Letting it hit allreduce would result in busy wait!
+            barrier(comm)
+
+            # exchange all the results
+            comm.Allreduce(
+                [Ptot, MPI.FLOAT],
+                [totals, MPI.FLOAT],
+                op = MPI.SUM)
+            return totals           
+            MultiTimer( "joint_probability_matrix  _jsf_uniform_orderstat_3d mpi_exchange",2)
+
     return Ptot
 
 
