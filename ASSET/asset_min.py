@@ -8,6 +8,12 @@ import elephant.statistics as estats
 import asset as asset
 import elephant.spike_train_generation as stg
 
+try:
+    from mpi4py import MPI
+    mpi_accelerated = True
+except:
+    mpi_accelerated = False
+
 
 MultiTimer("import")
 # ===========================================================================
@@ -62,23 +68,62 @@ MultiTimer("generate data")
 imat, xx, yy = asset.intersection_matrix(sts, binsize=binsize, dt=T)
 
 MultiTimer("intersection_matrix")
+
+
+
 # Compute the probability matrix, either analytically or via bootstrapping
 if prob_method == 'a':
     # Estimate rates
     fir_rates = list(np.zeros(shape=len(sts)))
+
+    #########################################
+    ## TODO: MPI 
+    if mpi_accelerated:
+        comm = MPI.COMM_WORLD
+        size = comm.Get_size()
+        rank = comm.Get_rank()
+    ##############################################
+
     for st_id, st_trial in enumerate(sts):
+        # Only calculate one one rank
+        if mpi_accelerated and st_id % size != rank:
+            continue 
+
         fir_rates[st_id] = estats.instantaneous_rate(st_trial,
                                                  sampling_period=sampl_period)
         fir_rates[st_id] = neo.AnalogSignal(
             fir_rates[st_id], t_start=t_pre, t_stop=t_post,
             sampling_period=sampl_period)
+
+
+    MultiTimer("prob_method instant calc", 1)
+
+    # make sure all date on all nodes
+    if mpi_accelerated:
+        for st_id, st_trial in enumerate(sts):
+            fir_rates[st_id] = comm.bcast(fir_rates[st_id], root=st_id % size )
+
+    MultiTimer("prob_method instant mpi", 1)
+
+
+
     # Compute the probability matrix analytically
     pmat, x_edges, y_edges = asset.probability_matrix_analytical(
         sts, binsize, dt=T, fir_rates=fir_rates)
+
+    MultiTimer("prob_method analyt")
+
 elif prob_method == 'b':
     # Compute the probability matrix via bootstrapping (Montecarlo)
     pmat, x_edges, y_edges = asset.probability_matrix_montecarlo(
         sts, binsize, dt=T, j = dither_T, n_surr=n_surr)
+    MultiTimer("prob_method prob")
+
+
+
+
+
+
 MultiTimer("prob_method")
 # Compute the joint probability matrix
 jmat = asset.joint_probability_matrix(
@@ -100,11 +145,7 @@ sse_found = asset.extract_sse(sts, xx, yy, cmat)
 
 MultiTimer("extract_sse")
 
-try:
-    from mpi4py import MPI
-    mpi_accelerated = True
-except:
-    mpi_accelerated = False
+
 
 if mpi_accelerated and not MPI.COMM_WORLD.Get_rank() is 0:
     exit(0)
