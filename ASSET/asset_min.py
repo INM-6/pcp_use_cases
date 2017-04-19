@@ -1,5 +1,3 @@
-from simplepytimer import MultiTimer
-
 import numpy as np
 import quantities as pq
 
@@ -14,8 +12,6 @@ try:
 except:
     mpi_accelerated = False
 
-
-MultiTimer("import")
 # ===========================================================================
 # Parameters definition
 # ===========================================================================
@@ -50,7 +46,6 @@ binwidth = 20 * pq.ms
 t_pre = 0 * pq.ms
 t_post = 1000 * pq.ms
 
-MultiTimer("init")
 # =======================================================================
 # Data generation
 # =======================================================================
@@ -61,15 +56,10 @@ for i in range(N):
     np.random.seed(i)
     sts.append(stg.homogeneous_poisson_process(rate, t_stop=T)) 
 
-MultiTimer("generate data")
 # =======================================================================
 # ASSET Method
 # =======================================================================
 imat, xx, yy = asset.intersection_matrix(sts, binsize=binsize, dt=T)
-
-MultiTimer("intersection_matrix")
-
-
 
 # Compute the probability matrix, either analytically or via bootstrapping
 if prob_method == 'a':
@@ -95,70 +85,37 @@ if prob_method == 'a':
             fir_rates[st_id], t_start=t_pre, t_stop=t_post,
             sampling_period=sampl_period)
 
-
-    MultiTimer("prob_method instant calc", 1)
-
     # make sure all date on all nodes
     if mpi_accelerated:
         for st_id, st_trial in enumerate(sts):
             fir_rates[st_id] = comm.bcast(fir_rates[st_id], root=st_id % size )
 
-    MultiTimer("prob_method instant mpi", 1)
-
-
-
     # Compute the probability matrix analytically
     pmat, x_edges, y_edges = asset.probability_matrix_analytical(
         sts, binsize, dt=T, fir_rates=fir_rates)
-
-    MultiTimer("prob_method analyt")
 
 elif prob_method == 'b':
     # Compute the probability matrix via bootstrapping (Montecarlo)
     pmat, x_edges, y_edges = asset.probability_matrix_montecarlo(
         sts, binsize, dt=T, j = dither_T, n_surr=n_surr)
-    MultiTimer("prob_method prob")
 
-
-
-
-
-
-MultiTimer("prob_method")
 # Compute the joint probability matrix
 jmat = asset.joint_probability_matrix(
     pmat, filter_shape=(fl, fw), alpha=0, pvmin=1e-5)
 
-MultiTimer("joint_probability_matrix")
 # Define thresholds
 q1, q2 = 1. - alpha1, 1. - alpha2
 
 # Create the mask from pmat and jmat
 mmat = asset.mask_matrices([pmat, jmat], [q1, q2])
-MultiTimer("mask_matrices")
+
 # Cluster the entries of mmat
 cmat = asset.cluster_matrix_entries(mmat, eps, minsize, stretch)
-MultiTimer("cluster_matrix_entries")
 
 # Extract the SSEs from the cluster matrix
 sse_found = asset.extract_sse(sts, xx, yy, cmat)
 
-MultiTimer("extract_sse")
-
-
 
 if mpi_accelerated and not MPI.COMM_WORLD.Get_rank() is 0:
     exit(0)
-
-
-
-file = open("sse_found", "w")
-file.write(str(sse_found))
-file.close()
-
-
-MultiTimer("end").print_timings()
-file_name = "timings.csv"
-fp = open(file_name,"w")
-MultiTimer.to_file_like_as_csv(fp)
-    
+   

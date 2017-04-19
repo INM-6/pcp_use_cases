@@ -31,8 +31,3 @@ def exp_opt_array(np.ndarray[float, ndim=2] input, logK):
                     input.shape[0] * input.shape[1],
 					logK)
 
-
-cdef extern from "_routines.hpp":
-    float expapprox_array(float* input, int entries)
-
-

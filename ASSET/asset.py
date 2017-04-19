@@ -52,7 +52,6 @@ import elephant.conversion as conv
 import elephant.spike_train_surrogates as spike_train_surrogates
 from sklearn.cluster import dbscan as dbscan
 
-from simplepytimer import MultiTimer
 try:
     import cython_lib
     cython_accelerated = True
@@ -1098,7 +1097,6 @@ def probability_matrix_analytical(
     imat, xx, yy = intersection_matrix(
         spiketrains, binsize=binsize, dt=dt, t_start_x=t_start_x,
         t_start_y=t_start_y)
-    MultiTimer("prob_method analyt prep", 3)
 
     pmat = np.zeros(imat.shape)
    
@@ -1113,12 +1111,10 @@ def probability_matrix_analytical(
         for j in _xrange(imat.shape[1]):
             pmat[i, j] = scipy.stats.poisson.cdf(imat[i, j] - 1, Mu[i, j])
        
-    MultiTimer("prob_method analyt loop", 3) 
     if mpi_accelerated:    
         for i in _xrange(imat.shape[0]):
             pmat[i] = comm.bcast(pmat[i], root=i % size)
 
-    MultiTimer("prob_method analyt mpi", 3)
     # Substitute 0.5 to the elements along the main diagonal
     diag_id, elems = _reference_diagonal(xx, yy)
     if diag_id is not None:
@@ -1189,34 +1185,25 @@ def _jsf_uniform_orderstat_3d(u, alpha, n):
     dU = np.diff(u_extended, axis=0)  # shape (d+1, A, B)
     del u_extended
 
-    ####################################
-    # 1. Move log outside of the inner loop
+    # Log calculation outside of the inner loop
     dU_log = np.log(dU)
     dU_scratch = np.empty_like(dU_log)
     log_point1 = np.log(1.)
-    #############################################
 
-    ############################
-    # 3. faster way to fill array
-    ############### Output arrays are exactly equal!! ###################
+    # faster way to fill array
     # TODO: What is this 6??? MAGIC NUMBER!!!
     dI = np.empty((6, A, B), dtype=np.float32)  # TODO: Use int??
-    ###############################################
 
-
-    ## #######################################
     ## TODO: MPI 
     if mpi_accelerated:
         comm = MPI.COMM_WORLD
         size = comm.Get_size()
         rank = comm.Get_rank()
-    ##############################################
 
     # Compute the probabilities at each (a, b), a=0,...,A-1, b=0,...,B-1
     # by matrix algebra, working along the third dimension (axis 0)
     Ptot = np.zeros((A, B), dtype=np.float32)  # initialize all A x B probabilities to 0
     iter_id = 0
-    MultiTimer( "joint_probability_matrix _jsf_uniform_orderstat_3d init", 1)
     for matrix_entries in itertools.product(*lists):
         # if we are running with MPI
         if mpi_accelerated and iter_id % size != rank:
@@ -1225,29 +1212,21 @@ def _jsf_uniform_orderstat_3d(u, alpha, n):
 
         iter_id += 1
 
-        ####################################
         # 2. Test for valid pyramid and exit loop early
-        ############### Output arrays are exactly equal!! ###################
         if (matrix_entries[0] < matrix_entries[1] or
             matrix_entries[1] < matrix_entries[2] or
             matrix_entries[2] < matrix_entries[3] or
             matrix_entries[3] < matrix_entries[4]):
                 # The shape of the matrix is not correct so exit this loop
                 continue
-        ############################################
 
         di = -np.diff(np.hstack([n, list(matrix_entries), 0]))
-        MultiTimer( "joint_probability_matrix _jsf_uniform_orderstat_3d diff", 2)
-        if np.all(di >= 0):
 
-            ##########################################################
+        if np.all(di >= 0):
             # 3. faster way to reshape the matrix for usage
-            ############### Output arrays are exactly equal!! ###################
             for idx in range(len(di)):
                 dI[idx,:,:].fill(di[idx])
-            ##################################################################
 
-            MultiTimer( "joint_probability_matrix  _jsf_uniform_orderstat_3d reshape", 2)
             # for each a=0,1,...,A-1 and b=0,1,...,B-1, replace dU_abk with 1
             # whenever dI_abk = 0, so that dU_abk ** dI_abk = 1 (this avoids
             # nans when both dU_abk and dI_abk are 0, and is mathematically
@@ -1258,37 +1237,25 @@ def _jsf_uniform_orderstat_3d(u, alpha, n):
             # Creates a matrix log_dIfactorial of shape (A, B)
             log_di_factorial = np.sum([np.log(np.arange(1, di_k + 1)).sum()
                                        for di_k in di if di_k >= 1])
-            MultiTimer( "joint_probability_matrix  _jsf_uniform_orderstat_3d sum", 2)
             # Compute for each i,j the contribution to the total
             # probability given by this step, and add it to the total prob.
 
-            ####################################################################
-            # 1. Use precomputed log
-            ############### Output arrays are exactly equal!! ###################
+            # Use precomputed log
             np.copyto(dU_scratch, dU_log)
-            MultiTimer( "joint_probability_matrix  _jsf_uniform_orderstat_3d copy_log_DU2",2 )
             dU_scratch[dI == 0] = log_point1
             
-            MultiTimer( "joint_probability_matrix  _jsf_uniform_orderstat_3d diag_log_DU2",2 )
-            log_DU2 = dU_scratch
-            #########################################################################
 
-            MultiTimer( "joint_probability_matrix  _jsf_uniform_orderstat_3d log_DU2",2 )
+            log_DU2 = dU_scratch
             prod_DU2 = dI * log_DU2
-            MultiTimer( "joint_probability_matrix  _jsf_uniform_orderstat_3d prod_DU2", 2)
             sum_DU2 = prod_DU2.sum(axis=0)
-            MultiTimer( "joint_probability_matrix  _jsf_uniform_orderstat_3d sum_DU2",2 )
             logP = sum_DU2 - log_di_factorial
-            MultiTimer( "joint_probability_matrix  _jsf_uniform_orderstat_3d log", 2)
+
             if cython_accelerated:
-                cython_lib.accelerated.exp_opt_array(logP, logK) 
+                cython_lib.fast_exp_array(logP, logK) 
                 Ptot += logP
             else:
                 Ptot += np.exp(logP + logK)
 
-            MultiTimer( "joint_probability_matrix  _jsf_uniform_orderstat_3d exp", 2)
-
-        MultiTimer( "joint_probability_matrix  _jsf_uniform_orderstat_3d step",1)
 
     if mpi_accelerated:
         totals = np.zeros((A, B)).astype(np.float32)
@@ -1302,8 +1269,9 @@ def _jsf_uniform_orderstat_3d(u, alpha, n):
             [Ptot, MPI.FLOAT],
             [totals, MPI.FLOAT],
             op = MPI.SUM)
+
+        # We need to return the collected totals instead of the local Ptot
         return totals           
-        MultiTimer( "joint_probability_matrix  _jsf_uniform_orderstat_3d mpi_exchange",1)
 
     return Ptot
 
@@ -1373,7 +1341,7 @@ def _pmat_neighbors(mat, filter_shape, nr_largest=None, diag=0):
     # TODO: make this on a 3D matrix to parallelize...
     N_bin = mat.shape[0]
     bin_range = range(N_bin - l + 1)
-    MultiTimer( "    joint_probability_matrix  _pmat_neighbors init ")
+
     # Compute fmat
     try:  # try by stacking the different patches of each row of mat
         flattened_filt = filt.flatten()
@@ -1384,18 +1352,13 @@ def _pmat_neighbors(mat, filter_shape, nr_largest=None, diag=0):
             for x in bin_range:
                 row_patches[x, :] = (mat[y:y + l, x:x + l]).flatten()
 
-            MultiTimer( "    joint_probability_matrix  _pmat_neighbors flatten ")
             # take the l largest values in each row (patch) and assign them
             # to the corresponding row in lmat
             largest_vals = np.sort(
                 row_patches * flattened_filt, axis=1)[:, -d:]
-            MultiTimer( "    joint_probability_matrix  _pmat_neighbors sort ")
-
 
             lmat[:, y + (l // 2),
                  (l // 2): (l // 2) + N_bin - l + 1] = largest_vals.T
-
-            MultiTimer( "    joint_probability_matrix  _pmat_neighbors step ")
 
     except MemoryError:  # if too large, do it serially by for loops
         for y in bin_range:  # one step to the right;
@@ -1468,7 +1431,6 @@ def joint_probability_matrix(
     # them by the maximum value 1-pvmin
     pmat_neighb = _pmat_neighbors(
         pmat, filter_shape=filter_shape, nr_largest=nr_largest, diag=0)
-    MultiTimer( "  joint_probability_matrix  _pmat_neighbors")
 
     pmat_neighb = np.minimum(pmat_neighb, 1. - pvmin)
 
@@ -1476,19 +1438,6 @@ def joint_probability_matrix(
     l, w = filter_shape
     n = l * (1 + 2 * w) - w * (w + 1)  # number of entries covered by kernel
     jpvmat = _jsf_uniform_orderstat_3d(pmat_neighb, alpha, n)
-    MultiTimer( "  joint_probability_matrix  _jsf_uniform_orderstat_3d")
-
-
-    fp = open("data/new_output.npy", "r")
-    data = np.load(fp)
-
-    if not np.array_equal(data, jpvmat):
-        print "*************** Output arrays not equal!! *************************"
-        fp = open("diffent_output.npy","w")
-
-        np.save(fp, jpvmat, allow_pickle=False)
-    else:
-        print "############### Output arrays are exactly equal!! ###################"
 
     return 1. - jpvmat
 
