@@ -413,7 +413,7 @@ def _time_slice(signal, t_start, t_stop):
 
     # Put the retained values and times into a new AnalogSignal
     sliced_signal = neo.AnalogSignal(
-        signal[elements_to_keep].view(pq.Quantity), t_start=times[0],
+        signal.magnitude[elements_to_keep].view(pq.Quantity), t_start=times[0],
         sampling_period=signal.sampling_period)
 
     return sliced_signal
@@ -667,7 +667,7 @@ def mask_matrices(matrices, thresholds):
 
     # Replace nans, coming from False * np.inf, with 0s
     # (trick to find nans in masked: a number is nan if it's not >= - np.inf)
-    mask[True - (mask >= -np.inf)] = False
+    mask[True ^ (mask >= -np.inf)] = False
 
     return np.array(mask, dtype=bool)
 

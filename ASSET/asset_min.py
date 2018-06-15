@@ -1,3 +1,4 @@
+
 import numpy as np
 import quantities as pq
 
@@ -5,6 +6,8 @@ import neo
 import elephant.statistics as estats
 import asset as asset
 import elephant.spike_train_generation as stg
+import time
+from timer import MultiTimer
 
 try:
     from mpi4py import MPI
@@ -12,13 +15,15 @@ try:
 except:
     mpi_accelerated = False
 
+MultiTimer("import")
+
 # ===========================================================================
 # Parameters definition
 # ===========================================================================
 # Data parameters
-N = 10                 # Number of spike trains
+N = 100                 # Number of spike trains
 rate = 15 * pq.Hz       # Firing rate
-T = 1 * pq.s            # Length of data 
+T = 5 * pq.s            # Length of data 
 
 # Parameters for the ASSET analysis
 binsize = 5 * pq.ms     # bin size
@@ -30,7 +35,7 @@ kernel_params= (fl, fw, fl)
 prob_method = 'a'       # Defines the method to calculate the probability 
                         # matrix: 'a' = analytical, 'b' = bootstrapping
 
-n_surr = 10           # Number of surrogates for the bootstrapping method
+n_surr = 10000           # Number of surrogates for the bootstrapping method
 dither_T = binsize * 5  # Window size for spike train dithering (bootstrapping)
 
 alpha1 = 1e-2           # threshold for 1st test
@@ -46,6 +51,8 @@ binwidth = 20 * pq.ms
 t_pre = 0 * pq.ms
 t_post = 1000 * pq.ms
 
+MultiTimer("init")
+
 # =======================================================================
 # Data generation
 # =======================================================================
@@ -56,10 +63,14 @@ for i in range(N):
     np.random.seed(i)
     sts.append(stg.homogeneous_poisson_process(rate, t_stop=T)) 
 
+MultiTimer("generate data")
+
 # =======================================================================
 # ASSET Method
 # =======================================================================
 imat, xx, yy = asset.intersection_matrix(sts, binsize=binsize, dt=T)
+
+MultiTimer("intersection_matrix")
 
 # Compute the probability matrix, either analytically or via bootstrapping
 if prob_method == 'a':
@@ -85,6 +96,7 @@ if prob_method == 'a':
             fir_rates[st_id], t_start=t_pre, t_stop=t_post,
             sampling_period=sampl_period)
 
+    MultiTimer("before broadcast")
     # make sure all date on all nodes
     if mpi_accelerated:
         for st_id, st_trial in enumerate(sts):
@@ -93,28 +105,41 @@ if prob_method == 'a':
     # Compute the probability matrix analytically
     pmat, x_edges, y_edges = asset.probability_matrix_analytical(
         sts, binsize, dt=T, fir_rates=fir_rates)
+    MultiTimer("probability_matrix_analytical")
 
 elif prob_method == 'b':
     # Compute the probability matrix via bootstrapping (Montecarlo)
     pmat, x_edges, y_edges = asset.probability_matrix_montecarlo(
         sts, binsize, dt=T, j = dither_T, n_surr=n_surr)
-
+    MultiTimer("probability_matrix_montecarlo")
 # Compute the joint probability matrix
 jmat = asset.joint_probability_matrix(
     pmat, filter_shape=(fl, fw), alpha=0, pvmin=1e-5)
-
+MultiTimer("joint_probability_matrix")
 # Define thresholds
 q1, q2 = 1. - alpha1, 1. - alpha2
 
 # Create the mask from pmat and jmat
 mmat = asset.mask_matrices([pmat, jmat], [q1, q2])
+MultiTimer("mask_matrices")
 
 # Cluster the entries of mmat
 cmat = asset.cluster_matrix_entries(mmat, eps, minsize, stretch)
+MultiTimer("cluster_matrix_entries")
 
 # Extract the SSEs from the cluster matrix
 sse_found = asset.extract_sse(sts, xx, yy, cmat)
+MultiTimer("extract_sses")
 
+file = open("sse_found", "w")
+file.write(str(sse_found))
+file.close()
+file_runtime = open("runtime.csv", "a")
+file_runtime.write("{0},{1}\n".format(size, MultiTimer.runtime()))
+file_runtime.close()
+
+if rank is 0:
+    MultiTimer.print_timings(header=True, seperator=",", prefix="")
 
 if mpi_accelerated and not MPI.COMM_WORLD.Get_rank() is 0:
     exit(0)
