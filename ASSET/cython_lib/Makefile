@@ -12,7 +12,14 @@ endif
 
 ifeq ($(CXX),g++)
     OPENMPFLAGS = -fopenmp
-    OPTFLAGS = -O3 -Wall -march=native -fno-strict-aliasing -fno-associative-math
+    OPTFLAGS = -O3 -Wall -fno-strict-aliasing -fno-associative-math
+endif
+
+arch := $(shell uname -p)
+ifeq ($(arch),x86_64)
+	OPTFLAGS += -march=native
+else ifeq ($(arch),ppc64le)
+	OPTFLAGS += -mcpu=native
 endif
 
 CXXFLAGS += -shared -DPIC -fPIC $(OPTFLAGS) $(OPENMPFLAGS)
