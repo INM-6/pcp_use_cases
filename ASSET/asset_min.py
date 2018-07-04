@@ -7,7 +7,7 @@ import elephant.statistics as estats
 import asset as asset
 import elephant.spike_train_generation as stg
 import time
-from timer import MultiTimer
+from simplepytimer import MultiTimer
 
 try:
     from mpi4py import MPI
