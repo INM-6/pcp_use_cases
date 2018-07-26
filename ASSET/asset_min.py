@@ -22,11 +22,11 @@ MultiTimer("import")
 # Parameters definition
 # ===========================================================================
 parser = argparse.ArgumentParser(description='Elephant ASSET Mini Benchmark')
-parser.add_argument('--spike-trains', dest='N', default=100, help='Number of Spike Trains')
-parser.add_argument('--firing-rate', dest='rate', default=15, help='Firing Rate (in Hz)')
-parser.add_argument('--data-length', dest='T', default=5, help='Length of Data (in s)')
-parser.add_argument('--bin-size', dest='binsize', default=5, help='Bin Size (in ms)')
-parser.add_argument('--surrogates', dest='n_surr', default=10000, help='Number of Surrogates (for Bootstrapping)')
+parser.add_argument('--spike-trains', dest='N', default=100, type=int, help='Number of Spike Trains')
+parser.add_argument('--firing-rate', dest='rate', default=15, type=int, help='Firing Rate (in Hz)')
+parser.add_argument('--data-length', dest='T', default=5, type=int, help='Length of Data (in s)')
+parser.add_argument('--bin-size', dest='binsize', default=5, type=int, help='Bin Size (in ms)')
+parser.add_argument('--surrogates', dest='n_surr', default=10000, type=int, help='Number of Surrogates (for Bootstrapping)')
 
 args = parser.parse_args()
 # Data parameters
