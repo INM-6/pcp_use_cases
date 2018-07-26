@@ -29,7 +29,6 @@ parser.add_argument('--bin-size', dest='binsize', default=5, help='Bin Size (in 
 parser.add_argument('--surrogates', dest='n_surr', default=10000, help='Number of Surrogates (for Bootstrapping)')
 
 args = parser.parse_args()
-print(args)
 # Data parameters
 N = args.N              # Number of spike trains
 rate = args.rate * pq.Hz  # Firing rate
