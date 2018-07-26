@@ -8,6 +8,7 @@ import asset as asset
 import elephant.spike_train_generation as stg
 import time
 from simplepytimer import MultiTimer
+import argparse
 
 try:
     from mpi4py import MPI
@@ -20,13 +21,22 @@ MultiTimer("import")
 # ===========================================================================
 # Parameters definition
 # ===========================================================================
+parser = argparse.ArgumentParser(description='Elephant ASSET Mini Benchmark')
+parser.add_argument('--spike-trains', dest='N', default=100, help='Number of Spike Trains')
+parser.add_argument('--firing-rate', dest='rate', default=15, help='Firing Rate (in Hz)')
+parser.add_argument('--data-length', dest='T', default=5, help='Length of Data (in s)')
+parser.add_argument('--bin-size', dest='binsize', default=5, help='Bin Size (in ms)')
+parser.add_argument('--surrogates', dest='n_surr', default=10000, help='Number of Surrogates (for Bootstrapping)')
+
+args = parser.parse_args()
+print(args)
 # Data parameters
-N = 100                 # Number of spike trains
-rate = 15 * pq.Hz       # Firing rate
-T = 5 * pq.s            # Length of data 
+N = args.N              # Number of spike trains
+rate = args.rate * pq.Hz  # Firing rate
+T = args.T * pq.s       # Length of data 
 
 # Parameters for the ASSET analysis
-binsize = 5 * pq.ms     # bin size
+binsize = args.binsize * pq.ms  # bin size
 fl = 5                  # filter length
 fw = 2                  # filter width
 
@@ -35,7 +45,7 @@ kernel_params= (fl, fw, fl)
 prob_method = 'a'       # Defines the method to calculate the probability 
                         # matrix: 'a' = analytical, 'b' = bootstrapping
 
-n_surr = 10000           # Number of surrogates for the bootstrapping method
+n_surr = args.n_surr    # Number of surrogates for the bootstrapping method
 dither_T = binsize * 5  # Window size for spike train dithering (bootstrapping)
 
 alpha1 = 1e-2           # threshold for 1st test
