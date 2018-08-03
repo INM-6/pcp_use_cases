@@ -27,6 +27,7 @@ parser.add_argument('--firing-rate', dest='rate', default=15, type=int, help='Fi
 parser.add_argument('--data-length', dest='T', default=5, type=int, help='Length of Data (in s)')
 parser.add_argument('--bin-size', dest='binsize', default=5, type=int, help='Bin Size (in ms)')
 parser.add_argument('--surrogates', dest='n_surr', default=10000, type=int, help='Number of Surrogates (for Bootstrapping)')
+parser.add_argument('--prob-method', dest='prob_method', choices=["a", "b"], default="a", type=str, help='Method for calculation of probability; a: analytical, b: bootstrapping')
 
 args = parser.parse_args()
 # Data parameters
@@ -41,8 +42,8 @@ fw = 2                  # filter width
 
 kernel_params= (fl, fw, fl)
 
-prob_method = 'a'       # Defines the method to calculate the probability 
-                        # matrix: 'a' = analytical, 'b' = bootstrapping
+prob_method = args.prob_method  # Defines the method to calculate the probability 
+                                # matrix: 'a' = analytical, 'b' = bootstrapping
 
 n_surr = args.n_surr    # Number of surrogates for the bootstrapping method
 dither_T = binsize * 5  # Window size for spike train dithering (bootstrapping)
