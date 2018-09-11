@@ -4,7 +4,7 @@ PYTHON = python
 
 # Use fancy methods to get the correct import directory
 PYTHON_INC = $(shell $(PYTHON) -c 'import sys; from distutils import sysconfig; sys.stdout.write(sysconfig.get_python_inc())')
-PYTHON_INC += -I$(shell $(PYTHON) -c 'import numpy; print numpy.get_include()')
+PYTHON_INC += -I$(shell $(PYTHON) -c 'import numpy; print(numpy.get_include())')
 
 ifdef PYTHON_INC
     CPPFLAGS += -I$(PYTHON_INC)

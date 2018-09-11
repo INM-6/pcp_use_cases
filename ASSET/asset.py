@@ -53,6 +53,12 @@ import elephant.spike_train_surrogates as spike_train_surrogates
 from sklearn.cluster import dbscan as dbscan
 
 try:
+    from simplepytimer import MultiTimer
+    timer_available = True
+except ImportError:
+    timer_available = False
+
+try:
     import cython_lib
     cython_accelerated = True
 except:
@@ -1174,6 +1180,7 @@ def _jsf_uniform_orderstat_3d(u, alpha, n):
 
     # Compute the log of the integral's coefficient
     logK = np.sum(np.log(np.arange(1, n + 1))) - n * np.log(1 - alpha)
+    if timer_available: MultiTimer("_jsf_uniform_orderstat_3d--logK", level=2)
 
     # Add to the 3D matrix u a bottom layer identically equal to alpha and a
     # top layer identically equal to 1. Then compute the difference dU along
@@ -1183,10 +1190,12 @@ def _jsf_uniform_orderstat_3d(u, alpha, n):
     for layer_idx, uu in enumerate(u):
         u_extended[layer_idx + 1] = u[layer_idx]
     dU = np.diff(u_extended, axis=0)  # shape (d+1, A, B)
+    if timer_available: MultiTimer("_jsf_uniform_orderstat_3d--dU", level=2)
     del u_extended
 
     # Log calculation outside of the inner loop
     dU_log = np.log(dU)
+    if timer_available: MultiTimer("_jsf_uniform_orderstat_3d--du_log", level=2)
     dU_scratch = np.empty_like(dU_log)
     log_point1 = np.log(1.)
 
@@ -1271,6 +1280,7 @@ def _jsf_uniform_orderstat_3d(u, alpha, n):
             op = MPI.SUM)
 
         # We need to return the collected totals instead of the local Ptot
+        if timer_available: MultiTimer("_jsf_uniform_orderstat_3d--Allreduce", level=2)
         return totals           
 
     return Ptot
@@ -1438,6 +1448,7 @@ def joint_probability_matrix(
     l, w = filter_shape
     n = l * (1 + 2 * w) - w * (w + 1)  # number of entries covered by kernel
     jpvmat = _jsf_uniform_orderstat_3d(pmat_neighb, alpha, n)
+    if timer_available: MultiTimer("joint_probability_matrix--_jsf_uniform_orderstat_3d", level=1)
 
     return 1. - jpvmat
 
