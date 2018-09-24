@@ -28,6 +28,8 @@ parser.add_argument('--data-length', dest='T', default=5, type=int, help='Length
 parser.add_argument('--bin-size', dest='binsize', default=5, type=int, help='Bin Size (in ms)')
 parser.add_argument('--surrogates', dest='n_surr', default=10000, type=int, help='Number of Surrogates (for Bootstrapping)')
 parser.add_argument('--prob-method', dest='prob_method', choices=["a", "b"], default="a", type=str, help='Method for calculation of probability; a: analytical, b: bootstrapping')
+parser.add_argument('--fix-seed', dest='fix_seed', action="store_true", help='If set, use a static same seed of 1')
+parser.add_argument('--skip-seed', dest='skip_seed', action="store_true", help='If set, skip explicitly setting the seed')
 
 args = parser.parse_args()
 # Data parameters
@@ -70,7 +72,8 @@ MultiTimer("init")
 # Generate the data
 sts = []
 for i in range(N):
-    np.random.seed(i)
+    if not args.skip_seed:
+        np.random.seed(i) if not args.fix_seed else np.random.seed(1)
     sts.append(stg.homogeneous_poisson_process(rate, t_stop=T)) 
 
 MultiTimer("generate data")
