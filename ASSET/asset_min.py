@@ -21,7 +21,7 @@ MultiTimer("import")
 # ===========================================================================
 # Parameters definition
 # ===========================================================================
-parser = argparse.ArgumentParser(description='Elephant ASSET Mini Benchmark')
+parser = argparse.ArgumentParser(description='Elephant ASSET Mini Benchmark', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 parser.add_argument('--spike-trains', dest='N', default=100, type=int, help='Number of Spike Trains')
 parser.add_argument('--firing-rate', dest='rate', default=15, type=int, help='Firing Rate (in Hz)')
 parser.add_argument('--data-length', dest='T', default=5, type=int, help='Length of Data (in s)')
